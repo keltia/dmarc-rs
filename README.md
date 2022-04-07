@@ -3,11 +3,12 @@
 
 > **Command-line analyze and display of DMARC reports**
 
+[![Build Status](https://api.cirrus-ci.com/github/keltia/dmarc-rs.svg?branch=main)](https://cirrus-ci.org/keltia/dmarc-rs)
+[![Crates.io](https://img.shields.io/crates/v/dmarc-rs.svg)](https://crates.io/crates/docs_rs)
+[![Docs](https://img.shields.io/docsrs/dmarc-rs)](https://docs.rs/dmarc-rs)
 [![GitHub release](https://img.shields.io/github/release/keltia/dmarc-rs.svg)](https://github.com/keltia/dmarc-rs/releases/)
 [![GitHub issues](https://img.shields.io/github/issues/keltia/dmarc-rs.svg)](https://github.com/keltia/dmarc-rs/issues)
 [![dmarc-rs: 1.56+]][Rust 1.56]
-[![Build Status](https://api.cirrus-ci.com/github/keltia/dmarc-rs.svg?branch=main)](https://cirrus-ci.org/keltia/dmarc-rs)
-[![Docs](https://img.shields.io/docsrs/dmarc-rs)](https://docs.rs/dmarc-rs)
 [![SemVer](https://img.shields.io/badge/semver-2.0.0-blue)](https://semver.org/spec/v2.0.0.html)
 [![License](https://img.shields.io/crates/l/mit)](https://opensource.org/licenses/MIT)
 
@@ -40,7 +41,7 @@ As with many Rust utilities, a simple
 
     cargo install dmarc-rs
 
-is enough to fetch, build and install.  
+is enough to fetch, build and install.
 
 On Windows systems, the above `cargo` command should work directly in a Powershell window.
 
