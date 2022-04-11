@@ -16,7 +16,7 @@ pub(crate) const AUTHORS: &str = crate_authors!();
 pub struct Opts {
     /// debug mode
     #[clap(short = 'D', long = "debug")]
-    pub debug: Option<bool>,
+    pub debug: bool,
     /// Do not resolve IP to names
     #[clap(short='N', long="no-resolve")]
     pub noresolve: bool,
