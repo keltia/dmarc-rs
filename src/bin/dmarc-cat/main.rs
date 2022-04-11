@@ -6,8 +6,10 @@
 // Internal crates
 //
 mod cli;
+mod version;
 
-use cli::{version, Opts};
+use cli::Opts;
+use version::version;
 
 // External crates
 //
