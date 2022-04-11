@@ -1,5 +1,5 @@
 
-use clap::{crate_version, crate_authors, Parser,AppSettings};
+use clap::{crate_version, crate_authors, crate_description, Parser,AppSettings};
 
 /// Binary name, using a different binary name
 pub(crate) const NAME: &str = env!("CARGO_BIN_NAME");
@@ -10,7 +10,7 @@ pub(crate) const AUTHORS: &str = crate_authors!();
 
 /// Help message
 #[derive(Parser, Debug)]
-#[clap(name = "dmarc-cat", about = "Explore DMARC reports")]
+#[clap(name = NAME, about = crate_description!())]
 #[clap(version = crate_version!(), author = crate_authors!())]
 #[clap(setting = AppSettings::NoAutoVersion)]
 pub struct Opts {
@@ -36,5 +36,5 @@ pub struct Opts {
 
 /// Display our version banned
 pub fn version() {
-    println!("{}/{} by {}", NAME, VERSION, AUTHORS);
+    println!("{}/{} by {}\n{}", NAME, VERSION, AUTHORS, crate_description!());
 }
