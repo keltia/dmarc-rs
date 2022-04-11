@@ -23,6 +23,7 @@ maintenance = { status = "actively-developed" }
 anyhow = "1.0"
 clap = { version = "3.1.8", features = ["derive", "cargo"] }
 log = "0.4"
+num_cpus = "1"
 stderrlog = "0.5.1"
 
 [dev-dependencies]
