@@ -26,7 +26,7 @@ pub struct Opts {
     #[clap(short = 'V', long = "version")]
     pub version: bool,
     /// Use this many parallel jobs for resolving IP
-    #[clap(short='j', long="jobs", default_value_t=num_cpus::get_physical())]
+    #[clap(short = 'j', long = "jobs", default_value_t = num_cpus::get_physical())]
     pub jobs: usize,
     /// Specify the type of input data
     #[clap(short = 't', long = "input-type")]
