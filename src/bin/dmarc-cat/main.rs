@@ -7,7 +7,7 @@
 //
 mod cli;
 
-use cli::{version,Opts};
+use cli::{version, Opts};
 
 // External crates
 //
