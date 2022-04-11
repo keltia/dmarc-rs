@@ -1,3 +1,5 @@
+//! Actual command-line parsing stuff
+
 use clap::{crate_authors, crate_description, crate_version, AppSettings, Parser};
 
 use crate::version::NAME;
