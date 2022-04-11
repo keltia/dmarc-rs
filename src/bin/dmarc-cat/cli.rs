@@ -27,8 +27,8 @@ pub struct Opts {
     #[clap(short = 'V', long = "version")]
     pub version: bool,
     /// Use this many parallel jobs for resolving IP
-    #[clap(short='j', long="jobs")]
-    pub jobs: Option<usize>,
+    #[clap(short='j', long="jobs", default_value_t=num_cpus::get_physical())]
+    pub jobs: usize,
     /// Specify the type of input data
     #[clap(short='t', long="input-type")]
     pub itype: Option<String>,
@@ -36,5 +36,5 @@ pub struct Opts {
 
 /// Display our version banned
 pub fn version() {
-    println!("{}/{} by {}\n{}", NAME, VERSION, AUTHORS, crate_description!());
+    println!("{}/{}/j{} by {}\n{}", NAME, VERSION, num_cpus::get_physical(), AUTHORS, crate_description!());
 }
