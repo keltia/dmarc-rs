@@ -45,6 +45,17 @@ is enough to fetch, build and install.
 
 On Windows systems, the above `cargo` command should work directly in a Powershell window.
 
+## Dependencies
+
+`dmarc-rs` uses the following crates to enable reading zip & gzip files:
+
+- [zip](https://lib.rs/crates/zip)
+- [flate2](https://lib.rs/crates/flate2)
+
+It also use the `dns-lookup` crate to resolve the IP from the report.
+
+- [dns-lookup](https://lib.rs/crates/dns-lookup)
+
 ## Usage
 
 SYNOPSIS
