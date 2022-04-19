@@ -43,9 +43,11 @@ pub enum Input {
 /// Validate the input type through the -t option
 ///
 pub fn valid_input(itype: &str) -> Input {
-    return match itype {
+    return match itype.to_lowercase().as_str() {
         "plain" => Input::Plain,
         "gzip" => Input::Gzip,
+        "gz" => Input::Gzip,
+        "txt" => Input::Plain,
         "zip" => Input::Zip,
         _ => Input::Invalid,
     }
@@ -58,8 +60,11 @@ mod tests {
 
     #[rstest]
     #[case("plain",Input::Plain)]
+    #[case("TXT",Input::Plain)]
     #[case("gzip", Input::Gzip)]
+    #[case("gz", Input::Gzip)]
     #[case("zip", Input::Zip)]
+    #[case("Zip", Input::Zip)]
     #[case("",Input::Invalid)]
     #[case("qZip", Input::Invalid)]
     #[case("", Input::Invalid)]
