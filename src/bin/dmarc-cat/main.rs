@@ -8,6 +8,9 @@
 mod cli;
 mod version;
 
+// Std library
+use std::process::exit;
+
 use cli::Opts;
 use version::version;
 
@@ -21,8 +24,10 @@ use clap::Parser;
 fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
+    // By-pass everything
     if opts.version {
-        version()
+        println!("{}", version());
+        exit(1)
     }
 
     Ok(())

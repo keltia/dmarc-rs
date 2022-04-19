@@ -10,8 +10,9 @@ pub(crate) const VERSION: &str = crate_version!();
 pub(crate) const AUTHORS: &str = crate_authors!();
 
 /// Display our version banned
-pub fn version() {
-    println!(
+#[inline]
+pub fn version() -> String {
+    return format!(
         "{}/{}/j{} by {}\n{}",
         NAME,
         VERSION,
