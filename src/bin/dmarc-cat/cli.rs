@@ -29,3 +29,41 @@ pub struct Opts {
     #[clap(short = 't', long = "input-type")]
     pub itype: Option<String>,
 }
+
+/// Allowed type of input
+///
+#[derive(Debug,PartialEq)]
+pub enum Input {
+    Invalid,
+    Plain,
+    Gzip,
+    Zip,
+}
+
+/// Validate the input type through the -t option
+///
+pub fn valid_input(itype: &str) -> Input {
+    return match itype {
+        "plain" => Input::Plain,
+        "gzip" => Input::Gzip,
+        "zip" => Input::Zip,
+        _ => Input::Invalid,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use rstest::rstest;
+    use super::*;
+
+    #[rstest]
+    #[case("plain",Input::Plain)]
+    #[case("gzip", Input::Gzip)]
+    #[case("zip", Input::Zip)]
+    #[case("",Input::Invalid)]
+    #[case("qZip", Input::Invalid)]
+    #[case("", Input::Invalid)]
+    fn test_valid_input(#[case] s: &str, #[case] it: Input) {
+        assert_eq!(it, valid_input(s));
+    }
+}
