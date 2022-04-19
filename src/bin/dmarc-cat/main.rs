@@ -11,7 +11,7 @@ mod version;
 // Std library
 use std::process::exit;
 
-use cli::Opts;
+use cli::{Opts,valid_input};
 use version::version;
 
 // External crates
@@ -29,6 +29,11 @@ fn main() -> Result<()> {
         println!("{}", version());
         exit(1)
     }
+
+    match opts.itype {
+        Some(t) => valid_input(t.as_str()),
+        _ => panic!("Invalid type")
+    };
 
     Ok(())
 }

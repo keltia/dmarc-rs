@@ -22,3 +22,15 @@ fn test_version() {
         .failure()
         .code(1);
 }
+
+#[test]
+#[should_panic]
+fn test_invalid_type() {
+    let mut cmd = Command::cargo_bin("dmarc-cat").unwrap();
+    println!("{:?}", cmd);
+    let assert = cmd
+        .arg("-t")
+        .arg("blah")
+        .assert();
+    assert.failure();
+}
