@@ -10,6 +10,14 @@ pub(crate) const VERSION: &str = crate_version!();
 pub(crate) const AUTHORS: &str = crate_authors!();
 
 /// Display our version banner
+///
+/// Example:
+/// ```
+/// # use dmarc_rs::version::version;
+///
+/// println!(version());
+/// ```
+///
 #[inline]
 pub fn version() -> String {
     return format!(
