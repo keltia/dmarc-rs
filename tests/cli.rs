@@ -18,11 +18,7 @@ fn test_help() {
 fn test_version() {
     let mut cmd = Command::cargo_bin(BIN).unwrap();
 
-    #[cfg(unix)]
-    cmd.arg("-V").assert().failure().code(1);
-
-    #[cfg(windows)]
-    cmd.arg("-V").assert().failure();
+    cmd.arg("-V").assert().success();
 }
 
 #[test]
