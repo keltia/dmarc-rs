@@ -1,25 +1,38 @@
 use assert_cmd::Command;
 
+const BIN: &str = "dmarc-cat";
+
+#[test]
+fn test_empty_args() {
+    let mut cmd = Command::cargo_bin(BIN).unwrap();
+    cmd.assert().failure();
+}
+
 #[test]
 fn test_help() {
-    let mut cmd = Command::cargo_bin("dmarc-cat").unwrap();
-    let assert = cmd.arg("-h").assert();
-    assert.success();
+    let mut cmd = Command::cargo_bin(BIN).unwrap();
+    cmd.arg("-h").assert().success();
 }
 
 #[test]
 fn test_version() {
-    let mut cmd = Command::cargo_bin("dmarc-cat").unwrap();
-    println!("{:?}", cmd);
-    let assert = cmd.arg("-V").assert();
-    assert.failure().code(1);
+    let mut cmd = Command::cargo_bin(BIN).unwrap();
+
+    #[cfg(unix)]
+    cmd.arg("-V").assert().failure().code(1);
+
+    #[cfg(windows)]
+    cmd.arg("-V").assert().failure();
 }
 
 #[test]
-#[should_panic]
-fn test_invalid_type() {
-    let mut cmd = Command::cargo_bin("dmarc-cat").unwrap();
-    println!("{:?}", cmd);
-    let assert = cmd.arg("-t").arg("blah").assert();
-    assert.failure();
+fn test_invalid_type_nok() {
+    let mut cmd = Command::cargo_bin(BIN).unwrap();
+    cmd.arg("-t").arg("blah").assert().failure();
+}
+
+#[test]
+fn test_invalid_type_ok() {
+    let mut cmd = Command::cargo_bin(BIN).unwrap();
+    cmd.arg("-t").arg("txt").assert().success();
 }
