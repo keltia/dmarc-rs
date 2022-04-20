@@ -1,7 +1,17 @@
 //! This is the dmarc-cat utility.
 //!
-//! The package is still named `dmarc-rs` to distinguish it from the Go version
-//! but the binary will remain the same.
+//! ## Notes
+//!
+//! The package is still named `dmarc-rs` to distinguish it from the [Go] version
+//! but the binary will remain the same (`dmarc-cat`) and can totally replace it.
+//!
+//! ## References
+//
+//! - [DMARC](https://dmarc.org/)
+//! - [SPF](http://www.rfc-editor.org/info/rfc7208)
+//! - [DKIM](http://www.rfc-editor.org/info/rfc6376)
+//! - [Go]:(https://golang.org/)
+
 
 // Internal crates
 //
