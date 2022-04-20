@@ -29,3 +29,15 @@ pub fn version() -> String {
         crate_description!()
     );
 }
+
+#[cfg(tests)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_version() {
+        assert!(version().contains(NAME));
+        assert!(version().contains(VERSION));
+        assert!(version().contains(AUTHORS))
+    }
+}
