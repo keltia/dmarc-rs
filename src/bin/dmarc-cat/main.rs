@@ -68,7 +68,7 @@ fn main() -> Result<()> {
             Some(it) => match valid_input(&it) {
                 Ok(it) => ftype = it,
                 _ => panic!("Invalid type for -t"),
-            }
+            },
         }
     } else {
         println!("{:?}", opts.files);
