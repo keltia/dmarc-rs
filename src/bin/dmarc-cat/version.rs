@@ -9,7 +9,7 @@ pub(crate) const VERSION: &str = crate_version!();
 /// Authors
 pub(crate) const AUTHORS: &str = crate_authors!();
 
-/// Display our version banned
+/// Display our version banner
 #[inline]
 pub fn version() -> String {
     return format!(
