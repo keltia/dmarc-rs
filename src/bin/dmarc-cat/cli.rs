@@ -29,6 +29,8 @@ pub struct Opts {
     /// Specify the type of input data
     #[clap(short = 't', long = "input-type")]
     pub itype: Option<String>,
+    /// Filenames (possibly none or -)
+    pub files: Vec<String>,
 }
 
 /// Allowed type of input
