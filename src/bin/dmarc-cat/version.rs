@@ -30,7 +30,7 @@ pub fn version() -> String {
     );
 }
 
-#[cfg(tests)]
+#[cfg(test)]
 mod tests {
     use super::*;
 
