@@ -19,11 +19,12 @@ mod cli;
 mod version;
 
 // Std library
+use std::env::args;
 use std::process::exit;
 
 // Our crates
 //
-use cli::{valid_input, Opts};
+use cli::{valid_input, Input, Opts};
 use version::version;
 
 // External crates
@@ -42,10 +43,22 @@ fn main() -> Result<()> {
         exit(1)
     }
 
-    match opts.itype {
-        Some(t) => valid_input(t.as_str()),
-        _ => panic!("Invalid type"),
-    };
+    let mut ftype = Input::Plain;
+
+    // If no arguments or argument == "-"
+    //
+    if opts.files.is_empty() {
+        // Assume stdin
+        match opts.itype {
+            None => panic!("-t MUST be provided"),
+            Some(it) => match valid_input(&it) {
+                Ok(it) => ftype = it,
+                _ => panic!("Invalid type for -t"),
+            }
+        }
+    } else {
+        println!("{:?}", opts.files);
+    }
 
     Ok(())
 }
