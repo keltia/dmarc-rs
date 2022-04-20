@@ -1,11 +1,15 @@
-//! Actual command-line parsing stuff
+//! Actual command-line parsing module
 
+// External crates
+//
 use anyhow::{anyhow, Result};
 use clap::{crate_authors, crate_description, crate_version, AppSettings, Parser};
 
+// Internal crates
+//
 use crate::version::NAME;
 
-/// Help message
+/// All parsable options and arguments.
 #[derive(Parser, Debug)]
 #[clap(name = NAME, about = crate_description!())]
 #[clap(version = crate_version!(), author = crate_authors!())]
