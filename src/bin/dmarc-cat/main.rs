@@ -40,7 +40,7 @@ fn main() -> Result<()> {
     // By-pass everything
     if opts.version {
         println!("{}", version());
-        exit(1)
+        exit(0)
     }
 
     let mut ftype = Input::Plain;
