@@ -13,7 +13,7 @@ use std::process::exit;
 
 // Our crates
 //
-use cli::{Opts,valid_input};
+use cli::{valid_input, Opts};
 use version::version;
 
 // External crates
@@ -34,7 +34,7 @@ fn main() -> Result<()> {
 
     match opts.itype {
         Some(t) => valid_input(t.as_str()),
-        _ => panic!("Invalid type")
+        _ => panic!("Invalid type"),
     };
 
     Ok(())

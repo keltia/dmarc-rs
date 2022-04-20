@@ -32,7 +32,7 @@ pub struct Opts {
 
 /// Allowed type of input
 ///
-#[derive(Debug,PartialEq)]
+#[derive(Debug, PartialEq)]
 pub enum Input {
     Invalid,
     Plain,
@@ -50,22 +50,22 @@ pub fn valid_input(itype: &str) -> Input {
         "txt" => Input::Plain,
         "zip" => Input::Zip,
         _ => Input::Invalid,
-    }
+    };
 }
 
 #[cfg(test)]
 mod tests {
-    use rstest::rstest;
     use super::*;
+    use rstest::rstest;
 
     #[rstest]
-    #[case("plain",Input::Plain)]
-    #[case("TXT",Input::Plain)]
+    #[case("plain", Input::Plain)]
+    #[case("TXT", Input::Plain)]
     #[case("gzip", Input::Gzip)]
     #[case("gz", Input::Gzip)]
     #[case("zip", Input::Zip)]
     #[case("Zip", Input::Zip)]
-    #[case("",Input::Invalid)]
+    #[case("", Input::Invalid)]
     #[case("qZip", Input::Invalid)]
     #[case("", Input::Invalid)]
     fn test_valid_input(#[case] s: &str, #[case] it: Input) {
