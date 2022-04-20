@@ -31,8 +31,8 @@
 
 // Internal crates
 //
-mod cli;
-mod version;
+pub mod cli;
+pub mod version;
 
 // Std library
 
