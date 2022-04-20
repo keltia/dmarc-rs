@@ -1,5 +1,6 @@
 //! Actual command-line parsing stuff
 
+use anyhow::{anyhow, Result};
 use clap::{crate_authors, crate_description, crate_version, AppSettings, Parser};
 
 use crate::version::NAME;
@@ -34,7 +35,6 @@ pub struct Opts {
 ///
 #[derive(Debug, PartialEq)]
 pub enum Input {
-    Invalid,
     Plain,
     Gzip,
     Zip,
@@ -50,15 +50,15 @@ pub enum Input {
 /// assert_eq!(Input::Plain, inp);
 /// ```
 ///
-pub fn valid_input(itype: &str) -> Input {
+pub fn valid_input(itype: &str) -> Result<Input> {
     return match itype.to_lowercase().as_str() {
-        "plain" => Input::Plain,
-        "gzip" => Input::Gzip,
-        "gz" => Input::Gzip,
-        "txt" => Input::Plain,
-        "zip" => Input::Zip,
-        _ => Input::Invalid,
-    };
+        "plain" => Ok(Input::Plain),
+        "txt" => Ok(Input::Plain),
+        "gzip" => Ok(Input::Gzip),
+        "gz" => Ok(Input::Gzip),
+        "zip" => Ok(Input::Zip),
+        _ => Err(anyhow!("Invalid type")),
+    }
 }
 
 #[cfg(test)]
@@ -73,10 +73,28 @@ mod tests {
     #[case("gz", Input::Gzip)]
     #[case("zip", Input::Zip)]
     #[case("Zip", Input::Zip)]
-    #[case("", Input::Invalid)]
-    #[case("qZip", Input::Invalid)]
-    #[case("", Input::Invalid)]
-    fn test_valid_input(#[case] s: &str, #[case] it: Input) {
-        assert_eq!(it, valid_input(s));
+    fn test_valid_input_ok(#[case] s: &str, #[case] it: Input) {
+        let r = valid_input(s);
+        assert!(valid_input(s).is_ok());
+        let r = match r {
+            Ok(r) => r,
+            Err(_) => panic!("nok"),
+        };
+        assert_eq!(it, r);
     }
+
+    #[rstest]
+    #[case("")]
+    #[case("qZip")]
+    #[case("")]
+    fn test_valid_input_nok(#[case] s: &str) {
+        let r = valid_input(s);
+        assert!(valid_input(s).is_err());
+        let r = match r {
+            Ok(_) => "bad ok".to_string(),
+            Err(e) => e.to_string(),
+        };
+        assert_eq!("Invalid type", r);
+    }
+
 }
