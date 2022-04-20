@@ -42,6 +42,14 @@ pub enum Input {
 
 /// Validate the input type through the -t option
 ///
+/// Example:
+/// ```
+/// # use dmarc_rs::cli::valid_input;
+///
+/// let inp = valid_input("plain");
+/// assert_eq!(Input::Plain, inp);
+/// ```
+///
 pub fn valid_input(itype: &str) -> Input {
     return match itype.to_lowercase().as_str() {
         "plain" => Input::Plain,
