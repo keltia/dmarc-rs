@@ -12,15 +12,12 @@
 //! - [DKIM](http://www.rfc-editor.org/info/rfc6376)
 //! - [Go]:(https://golang.org/)
 
-
 // Internal crates
 //
 mod cli;
 mod version;
 
 // Std library
-use std::env::args;
-use std::process::exit;
 
 // Our crates
 //
@@ -40,7 +37,7 @@ fn main() -> Result<()> {
     // By-pass everything
     if opts.version {
         println!("{}", version());
-        exit(0)
+        return Ok(())
     }
 
     let mut ftype = Input::Plain;
