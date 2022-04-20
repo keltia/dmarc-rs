@@ -27,7 +27,7 @@
 //! - [DMARC](https://dmarc.org/)
 //! - [SPF](http://www.rfc-editor.org/info/rfc7208)
 //! - [DKIM](http://www.rfc-editor.org/info/rfc6376)
-//! - [Go]:(https://golang.org/)
+//! - [Go](https://golang.org/)
 
 // Internal crates
 //
