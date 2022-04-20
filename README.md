@@ -47,6 +47,11 @@ On Windows systems, the above `cargo` command should work directly in a Powershe
 
 ## Dependencies
 
+The main parsing stuff is done by `serde & associates:
+
+- [serde](https://libs.rs/crates/serde)
+- [serde-xmls-rs](https://libs.rs/crates/serde-xml-rs)
+
 `dmarc-rs` uses the following crates to enable reading zip & gzip files:
 
 - [zip](https://lib.rs/crates/zip)
