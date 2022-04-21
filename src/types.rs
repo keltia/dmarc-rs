@@ -227,3 +227,33 @@ pub struct Report {
     pub policy_published: PolicyPublished,
     pub record: Vec<Record>,
 }
+
+/// Feedback is a sequence of Reports
+/// There could be several Reports in a single DMARC Feedback.
+pub type Feedback = Vec<Report>;
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use std::fs::File;
+    use std::io::prelude::*;
+
+    use serde_xml_rs::from_str;
+
+    #[test]
+    fn test_feedback_deserialize() {
+        let mut input = String::new();
+
+        File::open("testdata/google.com!keltia.net!1538438400!1538524799.xml")
+            .and_then(|mut f| f.read_to_string(&mut input))
+            .unwrap();
+
+        let item: Feedback = from_str(&input).unwrap();
+
+        // Validate some fields
+        assert_eq!("google.com", &item[0].report_metadata.org_name);
+        assert_eq!("noreply-dmarc-support@google.com", &item[0].report_metadata.email);
+        assert_eq!(2, (&item[0].record).len())
+    }
+}
