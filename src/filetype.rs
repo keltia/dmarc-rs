@@ -37,7 +37,7 @@ pub enum Input {
 /// Example:
 /// ```rust
 /// # use dmarc_rs::filetype::*;
-/// let inp = valid_input("plain");
+/// let inp = valid_input("plain").unwrap();
 /// assert_eq!(Input::Plain, inp);
 /// ```
 ///
