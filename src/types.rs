@@ -211,8 +211,11 @@ pub struct AuthResult {
 /// receiving system for the given set of messages.
 #[derive(Debug, Deserialize)]
 pub struct Record {
+    /// Data about the specific record/IP
     pub row: Row,
+    /// email metadata
     pub identifiers: Identifier,
+    /// Result from the policy checking
     pub auth_results: Vec<AuthResult>,
 }
 
@@ -222,9 +225,13 @@ pub struct Record {
 /// this is a single report.
 #[derive(Debug, Deserialize)]
 pub struct Report {
+    /// Version of DMARC format
     pub version: f32,
+    /// Report Metadata (org, contacts, etc.)
     pub report_metadata: ReportMetadata,
+    /// Summary of the DMARC published in the DNS
     pub policy_published: PolicyPublished,
+    /// All the different records from org_name.
     pub record: Vec<Record>,
 }
 
