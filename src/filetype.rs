@@ -1,5 +1,20 @@
 //! Input file type handling
 //!
+//! We allow different type of files as input to `dmarc-cat`:
+//!
+//! - `plain` for plain XML
+//! - `gzip` for gzipped XML
+//! - `zip` for Zip files containing both CSV and XML versions
+//!
+//! We also accept the following aliases:
+//!
+//! - `txt` for plain files
+//! - `gz` for gzip files.
+//!
+//! The name is not case-sensitive as seen in the tests below.
+//!
+//! `valid_input()` returns one of the `Input` enum values or an error.
+//!
 
 // External crates
 //
@@ -9,8 +24,11 @@ use anyhow::{anyhow, Result};
 ///
 #[derive(Debug, PartialEq)]
 pub enum Input {
+    /// plain text files aka utf-8 XML
     Plain,
+    /// XML compressed with gzip
     Gzip,
+    /// ZIP files with generally both CSV and XML
     Zip,
 }
 
