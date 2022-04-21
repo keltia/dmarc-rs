@@ -41,7 +41,7 @@ impl IP {
 
     /// Get the PTR value for the given IP
     ///
-    /// Example:
+    /// Examples:
     /// ```rust,no_run
     /// # use dmarc_rs::resolve::IP;
     /// # use dns_lookup::lookup_addr;
@@ -50,6 +50,19 @@ impl IP {
     /// assert_eq!("one.one.one.one", ptr.name)
     /// # ;
     /// ```
+    ///
+    /// If there is no PTR, returns a specific valid hostname.
+    ///
+    /// Example:
+    /// ```rust,no_run
+    /// # use dmarc_rs::resolve::IP;
+    /// # use dns_lookup::lookup_addr;
+    ///
+    /// let ptr = IP::new("192.0.2.1").solve();
+    /// assert_eq!("some.host.invalid", ptr.name)
+    /// # ;
+    /// ```
+    ///
     pub fn solve(&self) -> Self {
         let ip = self.ip;
         let name = match lookup_addr(&ip) {
@@ -107,8 +120,9 @@ mod tests {
     }
 
     #[rstest]
-    #[case("1.1.1.1","one.one.one.one")]
-    #[case("2606:4700:4700::1111","one.one.one.one")]
+    #[case("1.1.1.1", "one.one.one.one")]
+    #[case("2606:4700:4700::1111", "one.one.one.one")]
+    #[case("192.0.2.1", "some.host.invalid")]
     fn test_ip_solve(#[case] s: &str, #[case] p: &str) {
         let ptr = IP::new(s).solve();
         assert_eq!(s.parse::<IpAddr>().unwrap(), ptr.ip);
