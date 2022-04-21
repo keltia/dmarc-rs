@@ -61,6 +61,9 @@ mod tests {
     #[case("10.0.0.1")]
     #[case("172.16.1.1")]
     #[case("192.168.1.1")]
+    #[case("::127.0.0.1")]
+    #[case("::face:b00c")]
+    #[case("3ffe::a:b:c:d:e")]
     fn test_ip_new_ok(#[case] s: &str) {
         let a1 = IP::new(s);
         assert!(a1.name.is_empty());
