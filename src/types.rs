@@ -216,11 +216,14 @@ pub struct Record {
     pub auth_results: Vec<AuthResult>,
 }
 
-/// The whole report itself.
+/// One report.
+///
+/// XXX in dmarc.xsd, this is a sequence (i.e. there could be several reports in a file) so
+/// this is a single report.
 #[derive(Debug, Deserialize)]
-pub struct Feedback {
+pub struct Report {
     pub version: f32,
     pub report_metadata: ReportMetadata,
     pub policy_published: PolicyPublished,
-    pub records: Vec<Record>,
+    pub record: Vec<Record>,
 }
