@@ -71,7 +71,7 @@ pub struct PolicyPublished {
     /// The percent of messages to which policy applies.
     pub pct: usize,
     /// Failure reporting options in effect.
-    pub fo: String,
+    pub fo: Option<String>,
 }
 
 /// The DMARC-aligned authentication result
@@ -115,7 +115,7 @@ pub struct PolicyEvaluated {
     /// Result for SPF
     pub spf: DMARCResult,
     /// List of possible reasons
-    pub reason: Vec<PolicyOverrideReason>,
+    pub reason: Option<Vec<PolicyOverrideReason>>,
 }
 
 /// Row for each IP address
