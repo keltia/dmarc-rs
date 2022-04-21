@@ -66,10 +66,17 @@ impl IP {
     pub fn solve(&self) -> Self {
         let ip = self.ip;
         let name = match lookup_addr(&ip) {
-            Ok(nm) => nm,
-            _ => "some.host.invalid".into(),
+            Ok(nm) =>  {
+                // No PTR, force one
+                if ip.to_string() == nm {
+                    "some.host.invalid".into()
+                } else {
+                    nm
+                }
+            },
+            Err(e) => e.to_string(),
         };
-        IP {ip, name}
+        IP { ip, name }
     }
 }
 
