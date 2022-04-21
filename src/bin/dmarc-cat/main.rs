@@ -41,7 +41,8 @@ pub mod version;
 
 // Our crates
 //
-use cli::{valid_input, Input, Opts};
+use cli::Opts;
+use dmarc_rs::filetype::*;
 use version::version;
 
 // External crates
@@ -57,7 +58,7 @@ fn main() -> Result<()> {
     // By-pass everything
     if opts.version {
         println!("{}", version());
-        return Ok(())
+        return Ok(());
     }
 
     let mut ftype = Input::Plain;
