@@ -5,8 +5,12 @@
 //
 use std::net::IpAddr;
 
+// External crates
+//
+use dns_lookup::lookup_addr;
+
 /// Individual IP/name tuple
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct IP {
     /// IP, can be IPv4 or IPv6
     pub ip: IpAddr,
@@ -33,6 +37,26 @@ impl IP {
             ip: s.parse::<IpAddr>().unwrap(),
             name: "".into(),
         }
+    }
+
+    /// Get the PTR value for the given IP
+    ///
+    /// Example:
+    /// ```rust,no_run
+    /// # use dmarc_rs::resolve::IP;
+    /// # use dns_lookup::lookup_addr;
+    ///
+    /// let ptr = IP::new("1.1.1.1").solve();
+    /// assert_eq!("one.one.one.one", ptr.name)
+    /// # ;
+    /// ```
+    pub fn solve(&self) -> Self {
+        let ip = self.ip;
+        let name = match lookup_addr(&ip) {
+            Ok(nm) => nm,
+            _ => "some.host.invalid".into(),
+        };
+        IP {ip, name}
     }
 }
 
@@ -80,5 +104,21 @@ mod tests {
     #[should_panic]
     fn test_ip_new_nok(#[case] s: &str) {
         let _a1 = IP::new(s);
+    }
+
+    #[rstest]
+    #[case("1.1.1.1","one.one.one.one")]
+    #[case("2606:4700:4700::1111","one.one.one.one")]
+    fn test_ip_solve(#[case] s: &str, #[case] p: &str) {
+        let ptr = IP::new(s).solve();
+        assert_eq!(s.parse::<IpAddr>().unwrap(), ptr.ip);
+        assert_eq!(p.to_string(), ptr.name);
+    }
+
+    #[test]
+    fn test_solve_empty() {
+        let a = IPList::new();
+
+        assert!(parallel_solve(a).is_empty())
     }
 }
