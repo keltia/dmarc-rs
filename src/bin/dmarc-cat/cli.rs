@@ -46,11 +46,11 @@ pub enum Input {
     Zip,
 }
 
-/// Validate the input type through the -t option
+/// Validate the input type through the "-t" option
 ///
 /// Example:
-/// ```
-/// # use dmarc_rs::cli::valid_input;
+/// ```rust
+/// # use dmarc_cat::cli::valid_input;
 ///
 /// let inp = valid_input("plain");
 /// assert_eq!(Input::Plain, inp);
