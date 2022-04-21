@@ -1,4 +1,4 @@
-//! This is the dmarc-cat utility.
+//! This is the `dmarc-cat` utility.
 //!
 //! `dmarc-cat` is a small command-line utility to analyze and display in a usable manner
 //! the content of the DMARC XML reports sent by the various email providers around the globe.
