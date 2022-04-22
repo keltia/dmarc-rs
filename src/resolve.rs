@@ -93,6 +93,30 @@ pub fn parallel_solve(l: IPList) -> IPList {
     dbg!(full)
 }
 
+/// Simple and straightforward sequential solver
+///
+/// Example:
+/// ```
+/// # use dmarc_rs::resolve::{simple_solve,IP,IPList};
+///
+/// let mut l = IPList::new();
+/// l.push(IP::new( "1.1.1.1"));
+/// l.push(IP::new( "2606:4700:4700::1111"));
+/// l.push(IP::new( "192.0.2.1"));
+///
+/// let ptr = simple_solve(l);
+/// ```
+///
+pub fn simple_solve(l: IPList) -> IPList {
+    let mut r = IPList::new();
+
+    for ip in l {
+        let ip = ip.solve();
+        r.push(ip.clone());
+    }
+    r
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -141,5 +165,27 @@ mod tests {
         let a = IPList::new();
 
         assert!(parallel_solve(a).is_empty())
+    }
+
+    #[test]
+    fn test_simple_solve_empty() {
+        let a = IPList::new();
+
+        assert!(simple_solve(a).is_empty())
+    }
+
+    #[test]
+    fn test_simple_solve_ok() {
+        let mut l = IPList::new();
+
+        l.push(IP::new ( "1.1.1.1"));
+        l.push(IP::new ( "2606:4700:4700::1111"));
+        l.push(IP::new ( "192.0.2.1"));
+
+        let ptr = simple_solve(l);
+
+        assert_eq!(ptr[0].name.to_string(), "one.one.one.one");
+        assert_eq!(ptr[1].name.to_string(), "one.one.one.one");
+        assert_eq!(ptr[2].name.to_string(), "some.host.invalid");
     }
 }
