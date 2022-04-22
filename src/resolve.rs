@@ -80,6 +80,24 @@ impl IP {
     }
 }
 
+/// Create a new IP from a tuple with all fields
+///
+/// Example:
+/// ```
+/// # use std::net::IpAddr;
+/// use dmarc_rs::resolve::IP;
+/// let t = IP::from(("1.1.1.1", "one.one.one.one"));
+///
+/// assert_eq!("1.1.1.1".parse::<IpAddr>().unwrap(), t.ip);
+/// assert_eq!("one.one.one.one", &t.name);
+/// ```
+///
+impl<'a> From<(&'a str, &'a str)> for IP {
+    fn from((ip, name): (&'a str, &'a str)) -> Self {
+        IP { ip: ip.parse::<IpAddr>().unwrap(), name: name.into() }
+    }
+}
+
 /// List of IP tuples.
 pub type IPList = Vec<IP>;
 
@@ -187,5 +205,14 @@ mod tests {
         assert_eq!(ptr[0].name.to_string(), "one.one.one.one");
         assert_eq!(ptr[1].name.to_string(), "one.one.one.one");
         assert_eq!(ptr[2].name.to_string(), "some.host.invalid");
+    }
+
+    #[test]
+    fn test_new_from_tuple() {
+        let exp = IP { ip: "1.1.1.1".parse::<IpAddr>().unwrap(), name: "one.one.one.one".into() };
+
+        let t = IP::from(("1.1.1.1", "one.one.one.one"));
+
+        assert_eq!(exp, t);
     }
 }
