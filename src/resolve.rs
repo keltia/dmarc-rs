@@ -161,7 +161,7 @@ mod tests {
     }
 
     #[test]
-    fn test_solve_empty() {
+    fn test_parallel_solve_empty() {
         let a = IPList::new();
 
         assert!(parallel_solve(a).is_empty())
