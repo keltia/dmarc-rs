@@ -44,7 +44,6 @@ impl IP {
     /// Examples:
     /// ```rust,no_run
     /// # use dmarc_rs::resolve::IP;
-    /// # use dns_lookup::lookup_addr;
     ///
     /// let ptr = IP::new("1.1.1.1").solve();
     /// assert_eq!("one.one.one.one", ptr.name)
@@ -56,7 +55,6 @@ impl IP {
     /// Example:
     /// ```rust,no_run
     /// # use dmarc_rs::resolve::IP;
-    /// # use dns_lookup::lookup_addr;
     ///
     /// let ptr = IP::new("192.0.2.1").solve();
     /// assert_eq!("some.host.invalid", ptr.name)
