@@ -7,7 +7,6 @@ use std::net::IpAddr;
 
 // External crates
 //
-use anyhow::Result;
 use dns_lookup::lookup_addr;
 
 /// Individual IP/name tuple
