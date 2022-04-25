@@ -1,10 +1,6 @@
 //! Module handling the DNS interactions
 //!
 
-// Std library
-//
-use std::net::IpAddr;
-
 // Our crates
 //
 use crate::ip::IP;
