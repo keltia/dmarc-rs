@@ -144,4 +144,16 @@ mod tests {
         assert_eq!(s.parse::<IpAddr>().unwrap(), ptr.ip);
         assert_eq!(p.to_string(), ptr.name);
     }
+
+    #[test]
+    fn test_new_from_tuple() {
+        let exp = IP {
+            ip: "1.1.1.1".parse::<IpAddr>().unwrap(),
+            name: "one.one.one.one".into(),
+        };
+
+        let t = IP::from(("1.1.1.1", "one.one.one.one"));
+
+        assert_eq!(exp, t);
+    }
 }
