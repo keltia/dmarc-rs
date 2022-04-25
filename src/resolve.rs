@@ -71,7 +71,8 @@ pub type IPList = Vec<IP>;
     /// let mut l = IPList::new();
     /// l.push(IP::new("1.1.1.1"));
     /// ```
-    pub fn push(mut self, ip: IP) {
+    ///
+    pub fn push(&mut self, ip: IP) {
         self.list.push(ip);
     }
 }
