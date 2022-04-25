@@ -64,6 +64,20 @@ pub type IPList = Vec<IP>;
         }
         r
     }
+
+    /// Helper fn to add IP to a list
+    ///
+    /// Example:
+    /// ```
+    /// # use dmarc_rs::ip::IP;
+    /// # use dmarc_rs::resolve::IPList;
+    ///
+    /// let mut l = IPList::new();
+    /// l.push(IP::new("1.1.1.1"));
+    /// ```
+    pub fn push(mut self, ip: IP) {
+        self.list.push(ip);
+    }
 }
 
 use std::error::Error;
