@@ -5,108 +5,108 @@
 //
 use std::net::IpAddr;
 
+// Our crates
+//
+use crate::ip::IP;
+
 // External crates
 //
 use dns_lookup::lookup_addr;
 
-/// Individual IP/name tuple
-#[derive(Clone, Debug, PartialEq)]
-pub struct IP {
-    /// IP, can be IPv4 or IPv6
-    pub ip: IpAddr,
-    /// hostname.
-    pub name: String,
-}
-
-/// Implement a few helpers functions for IP
-impl IP {
-    /// Create a new tuple with empty name.
-    ///
-    /// `new()` will panic with an invalid IPv{4,6} address
-    ///
-    /// Example:
-    /// ```rust
-    /// # use dmarc_rs::resolve::IP;
-    ///
-    /// let ip = IP::new("1.1.1.1")
-    /// # ;
-    /// ```
-    ///
-    pub fn new(s: &str) -> Self {
-        IP {
-            ip: s.parse::<IpAddr>().unwrap(),
-            name: "".into(),
-        }
-    }
-
-    /// Get the PTR value for the given IP
-    ///
-    /// Examples:
-    /// ```rust,no_run
-    /// # use dmarc_rs::resolve::IP;
-    ///
-    /// let ptr = IP::new("1.1.1.1").solve();
-    /// assert_eq!("one.one.one.one", ptr.name)
-    /// # ;
-    /// ```
-    ///
-    /// If there is no PTR, returns a specific valid hostname.
-    ///
-    /// Example:
-    /// ```rust,no_run
-    /// # use dmarc_rs::resolve::IP;
-    ///
-    /// let ptr = IP::new("192.0.2.1").solve();
-    /// assert_eq!("some.host.invalid", ptr.name)
-    /// # ;
-    /// ```
-    ///
-    pub fn solve(&self) -> Self {
-        let ip = self.ip;
-        let name = match lookup_addr(&ip) {
-            Ok(nm) =>  {
-                // No PTR, force one
-                if ip.to_string() == nm {
-                    "some.host.invalid".into()
-                } else {
-                    nm
-                }
-            },
-            Err(e) => e.to_string(),
-        };
-        IP { ip, name }
-    }
-}
-
-/// Create a new IP from a tuple with all fields
-///
-/// Example:
-/// ```
-/// # use std::net::IpAddr;
-/// use dmarc_rs::resolve::IP;
-/// let t = IP::from(("1.1.1.1", "one.one.one.one"));
-///
-/// assert_eq!("1.1.1.1".parse::<IpAddr>().unwrap(), t.ip);
-/// assert_eq!("one.one.one.one", &t.name);
-/// ```
-///
-impl<'a> From<(&'a str, &'a str)> for IP {
-    fn from((ip, name): (&'a str, &'a str)) -> Self {
-        IP { ip: ip.parse::<IpAddr>().unwrap(), name: name.into() }
-    }
-}
-
 /// List of IP tuples.
 pub type IPList = Vec<IP>;
 
-/// Convert a list of IP into names with multiple threads
-///
-/// Example:
-///
-pub fn parallel_solve(l: IPList) -> IPList {
-    let full = IPList::new();
+    /// Convert a list of IP into names with multiple threads
+    ///
+    /// It uses a function to fillin the input channel then fan_out/fan_in to fill the result
+    /// list.
+    ///
+    /// Example:
+    ///
+    pub fn parallel_solve(self, njobs: usize) -> IPList {
+        let mut full = IPList::new();
+        let s = self.list.len();
 
-    dbg!(full)
+        let pool = ThreadPool::new(njobs);
+        let rx_gen = queue(self).unwrap();
+        let rx_out = fan_out(rx_gen, pool, s).unwrap();
+        for ip in fan_in(rx_out).unwrap() {
+            full.list.push(ip);
+        }
+        dbg!(&full);
+        full
+    }
+
+    pub fn push(mut self, ip: IP) {
+        self.list.push(ip);
+    }
+
+    /// Simple and straightforward sequential solver
+    ///
+    /// Example:
+    /// ```
+    /// # use dmarc_rs::resolve::{simple_solve,IP,IPList};
+    ///
+    /// let mut l = IPList::new();
+    /// l.push(IP::new( "1.1.1.1"));
+    /// l.push(IP::new( "2606:4700:4700::1111"));
+    /// l.push(IP::new( "192.0.2.1"));
+    ///
+    /// let ptr = l.simple_solve();
+    /// ```
+    ///
+    pub fn simple_solve(self) -> Self {
+        let mut r = IPList::new();
+
+        for ip in self.list.iter() {
+            let ip = ip.solve();
+            r.list.push(ip.clone());
+        }
+        r
+    }
+}
+
+use std::error::Error;
+use std::thread;
+use std::sync::mpsc::{channel, Receiver};
+use threadpool::ThreadPool;
+
+fn queue(l: IPList) -> Result<Receiver<IP>> {
+    let (tx, rx) = channel();
+
+    thread::spawn(move || {
+        for ip in l.list.iter() {
+            tx.send(ip.clone()).expect("can not queue")
+        }
+    });
+    Ok(rx)
+}
+
+fn fan_out(rx_gen: Receiver<IP>, pool: ThreadPool, njobs: usize) -> Result<Receiver<IP>, Box<dyn Error>> {
+    let (tx, rx) = channel();
+
+    for _ in 0..njobs {
+        let tx = tx.clone();
+        let n = rx_gen.recv().unwrap();
+        pool.execute(move || {
+            let name = lookup_addr(&n.ip).unwrap();
+            let r = IP { ip: n.ip, name: name };
+            tx.send(r)
+                .expect("waiting channel");
+        });
+    }
+    Ok(rx)
+}
+
+fn fan_in(rx_out: Receiver<IP>) -> Result<Receiver<IP>, Box<dyn Error>> {
+    let (tx, rx) = channel();
+    thread::spawn(move || {
+        for ip in rx_out.iter() {
+            tx.send(ip)
+                .expect("can not send");
+        }
+    });
+    Ok(rx)
 }
 
 /// Simple and straightforward sequential solver
@@ -136,45 +136,8 @@ pub fn simple_solve(l: IPList) -> IPList {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use rstest::rstest;
-
-    #[rstest]
-    #[case("0.0.0.0")]
-    #[case("127.0.0.1")]
-    #[case("1.2.3.4")]
-    #[case("10.0.0.1")]
-    #[case("172.16.1.1")]
-    #[case("192.168.1.1")]
-    #[case("::127.0.0.1")]
-    #[case("::face:b00c")]
-    #[case("3ffe::a:b:c:d:e")]
-    fn test_ip_new_ok(#[case] s: &str) {
-        let a1 = IP::new(s);
-        assert!(a1.name.is_empty());
-        assert_eq!(s.parse::<IpAddr>().unwrap(), a1.ip)
-    }
-
-    #[rstest]
-    #[case("333.0.0.0")]
-    #[case("127.333.0.1")]
-    #[case("1.2.333.4")]
-    #[case("10.0.0.555")]
-    #[case("foobar")]
-    #[case("::blah:blah::.168.1.1")]
-    #[should_panic]
-    fn test_ip_new_nok(#[case] s: &str) {
-        let _a1 = IP::new(s);
-    }
-
-    #[rstest]
-    #[case("1.1.1.1", "one.one.one.one")]
-    #[case("2606:4700:4700::1111", "one.one.one.one")]
-    #[case("192.0.2.1", "some.host.invalid")]
-    fn test_ip_solve(#[case] s: &str, #[case] p: &str) {
-        let ptr = IP::new(s).solve();
-        assert_eq!(s.parse::<IpAddr>().unwrap(), ptr.ip);
-        assert_eq!(p.to_string(), ptr.name);
-    }
+    use crate::ip::IP;
+    use std::net::IpAddr;
 
     #[test]
     fn test_parallel_solve_empty() {
