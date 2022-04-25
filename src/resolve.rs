@@ -147,7 +147,6 @@ pub fn simple_solve(l: IPList) -> IPList {
 mod tests {
     use super::*;
     use crate::ip::IP;
-    use std::net::IpAddr;
 
     #[test]
     fn test_parallel_solve_empty() {
