@@ -144,7 +144,7 @@ impl IPList {
 
         for ip in self.list.iter() {
             let ip = ip.solve();
-            r.list.push(ip.clone());
+            r.push(ip.clone());
         }
         r
     }
