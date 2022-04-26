@@ -47,8 +47,9 @@ On Windows systems, the above `cargo` command should work directly in a Powershe
 
 ## Dependencies
 
-The main parsing stuff is done by `serde & associates:
+The main parsing stuff is done by `serde & associates and CLI handling is `clap`:
 
+- [clap](https://lib.rs/crates/clap)
 - [serde](https://libs.rs/crates/serde)
 - [serde-xmls-rs](https://libs.rs/crates/serde-xml-rs)
 
@@ -57,32 +58,39 @@ The main parsing stuff is done by `serde & associates:
 - [zip](https://lib.rs/crates/zip)
 - [flate2](https://lib.rs/crates/flate2)
 
-It also use the `dns-lookup` crate to resolve the IP from the report.
+It also use the following crates for DNS resolving/threading from the report.
 
 - [dns-lookup](https://lib.rs/crates/dns-lookup)
+- [ThreadPool](https://lib.rs/crates/threadpool)
+
+and a few other helper crates.
 
 ## Usage
 
 SYNOPSIS
 ```
-dmarc-rs -hvDN [-j N] [-t type] [-S sort] [-version] <zipfile|xmlfile>
+dmarc-cat 0.2.0
+Ollivier Robert <roberto@keltia.net>
+Rust utility to decode and display DMARC reports.
 
-Usage of ./dmarc-rs:
-  -D	Debug mode
-  -N	Do not resolve IPs
-  -S string
-    	Sort results (default "\"Count\" \"dsc\"")
-  -j int
-    	Parallel jobs (default 8)
-  -t string
-    	File type for stdin mode
-  -v	Verbose mode
-  -version
-    	Display version
-    	
+USAGE:
+    dmarc-cat [OPTIONS] [FILES]...
+
+ARGS:
+    <FILES>...    Filenames (possibly none or -)
+
+OPTIONS:
+    -D, --debug                 debug mode
+    -h, --help                  Print help information
+    -j, --jobs <JOBS>           Use this many parallel jobs for resolving IP [default: 6]
+    -N, --no-resolve            Do not resolve IP to names
+    -t, --input-type <ITYPE>    Specify the type of input data
+    -v, --verbose               Verbose mode
+    -V, --version               Display version and exit
+        	
 Example:
 
-$ dmarc-rs /tmp/yahoo.com\!keltia.net\!1518912000\!1518998399.xml
+$ dmarc-cat /tmp/yahoo.com\!keltia.net\!1518912000\!1518998399.xml
 
 Reporting by: Yahoo! Inc. — postmaster@dmarc.yahoo.com
 From 2018-02-18 01:00:00 +0100 CET to 2018-02-19 00:59:59 +0100 CET
@@ -97,7 +105,8 @@ IP            Count   From       RFrom      RDKIM   RSPF
 
 ## Columns
 
-The full XML grammar is available [here](https://tools.ietf.org/html/rfc7489#appendix-C)
+The full XML grammar is available [here](https://tools.ietf.org/html/rfc7489#appendix-C) and there is a local
+copy in the `doc/` directory in the source.
 
 The report has several columns:
 
