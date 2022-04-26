@@ -26,7 +26,7 @@
 //!     -v, --verbose               Verbose mode
 //!     -V, --version               Display version and exit
 //! ```
-//! 
+//!
 //! ## Columns
 //!
 //! The full XML grammar is available here: [dmarc.xsd](https://tools.ietf.org/html/rfc7489#appendix-C)
@@ -56,6 +56,7 @@ pub mod version;
 
 // Std library
 
+use std::path::Path;
 // Our crates
 //
 use cli::Opts;
@@ -64,7 +65,7 @@ use version::version;
 
 // External crates
 //
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::Parser;
 
 /// Main entry point
@@ -93,6 +94,14 @@ fn main() -> Result<()> {
         }
     } else {
         println!("{:?}", opts.files);
+
+        for f in opts.files.iter() {
+            let p = Path::new(f);
+            match p.exists() {
+                true => println!("file: {:?}", p),
+                false => return Err(anyhow!("Unknown file {:?}", p)),
+            }
+        }
     }
 
     Ok(())
