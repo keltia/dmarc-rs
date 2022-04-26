@@ -133,6 +133,8 @@ Getting close to 90% coverage.
 
 ## Contributing
 
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for some simple rules.
+
 I use Git Flow for this package so please use something similar or the usual github workflow.
 
 1. Fork it ( https://github.com/keltia/dmarc-rs/fork )
