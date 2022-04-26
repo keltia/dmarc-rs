@@ -14,6 +14,7 @@
 
 [dmarc-rs: 1.56+]: https://img.shields.io/badge/Rust%20version-1.56%2B-lightgrey
 [Rust 1.56]: https://blog.rust-lang.org/2021/10/21/Rust-1.56.0.html
+[Go]: https://golang.org/
 
 Licensed under the [MIT](LICENSE).
 
@@ -34,6 +35,10 @@ Licensed under the [MIT](LICENSE).
 * Windows
     * cmd.exe
     * Powershell
+
+## Notes
+
+The package is named `dmarc_rs` to distinguish it from the [Go] version but the binary will remain the same (`dmarc-cat`) and can totally replace it.
 
 ## Installation
 
