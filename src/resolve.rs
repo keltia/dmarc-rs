@@ -162,6 +162,21 @@ impl IPList {
     pub fn push(&mut self, ip: IP) {
         self.list.push(ip);
     }
+
+    /// Implement len() or IPList
+    ///
+    /// Example:
+    /// ```
+    /// # use dmarc_rs::ip::IP;
+    /// # use dmarc_rs::resolve::IPList;
+    /// let mut l = IPList::new();
+    /// l.push(IP::new("1.1.1.1"));
+    /// println!("length of l is {}", l.len())
+    /// ```
+    ///
+    pub fn len(&self) -> usize {
+        self.list.len()
+    }
 }
 
 // --- Private functions
@@ -209,7 +224,7 @@ mod tests {
         l.push(IP::new("9.9.9.9"));
         l.push(IP::new("1.0.0.1"));
 
-        assert_eq!(2, l.list.len());
+        assert_eq!(2, l.len());
         assert_eq!("9.9.9.9", l.list[0].ip.to_string());
     }
 
@@ -239,7 +254,7 @@ mod tests {
 
         let ptr = l.simple_solve();
 
-        assert_eq!(l.list.len(), ptr.list.len());
+        assert_eq!(l.len(), ptr.len());
         assert_eq!(ptr.list[0].name.to_string(), "one.one.one.one");
         assert_eq!(ptr.list[1].name.to_string(), "one.one.one.one");
         assert_eq!(ptr.list[2].name.to_string(), "some.host.invalid");
