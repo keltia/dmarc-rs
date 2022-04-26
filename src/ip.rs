@@ -1,5 +1,25 @@
 //! Helper module to deal with tuples of IP/names.
 //!
+//! We define IP as a tuple containing the `IpAddr` and the name (initially empty of course).
+//! To facilitate manipulations, we also define `from` to magically convert tuples of strings
+//! into an `IP`.
+//!
+//! Example:
+//! ```
+//! use dmarc_rs::ip::IP;
+//!
+//! let me = IP::new("127.0.0.1");
+//! ```
+//! or
+//! ```
+//! use dmarc_rs::ip::IP;
+//!
+//! let me = IP::from(("::1", "localhost"));
+//! ```
+//!
+//! The `solve()`  method does the A/AAAA to PTR conversion with a twist: if the IP can't be
+//! resolved it returns "some.host.invalid".
+//!
 
 // Std library
 //

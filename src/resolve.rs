@@ -1,4 +1,37 @@
-//! Module handling the DNS interactions
+//! Module handling the DNS resolving operations
+//!
+//! We define a list of IP tuples from the `dmarc_rs::ip` crate and implement two methods
+//! for resolving the IP into names.  One is `simple_solve()` which is a straightforward sequential
+//! solver, the other one is `parallel_solve()` which is using threads from a pool to implement a
+//! worker-based fan-out/fan-in scheme with channels to move data around.
+//!
+//! Examples:
+//! ```rust
+//! use dmarc_rs::resolve::IPList;
+//!
+//! let l = IPList::new();
+//! // populate here the list of IP tuples
+//!
+//! // Use the simple solver
+//! let ptr = l.simple_solve();
+//! dbg!(&ptr);
+//! ```
+//! and with the parallel solver:
+//! ```rust
+//! use dmarc_rs::resolve::IPList;
+//! use num_cpus::get_physical;
+//!
+//! // Get the number of physical cores, I prefer to use this one instead of the potentially
+//! // larger total cores because Hyperthreading has some overhead.
+//! let njobs = get_physical();
+//!
+//! let l = IPList::new();
+//! // populate here the list of IP tuples
+//! // ...
+//! // Use the parallel solver
+//! let ptr = l.parallel_solve(njobs);
+//! dbg!(&ptr);
+//! ```
 //!
 
 // Our crates
