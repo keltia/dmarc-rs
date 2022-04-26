@@ -4,6 +4,29 @@
 //! the content of the DMARC XML reports sent by the various email providers around the globe.
 //! Should work properly on UNIX (FreeBSD, Linux, etc.) and Windows systems.
 //!
+//! ## Usage
+//!
+//! ```console
+//! dmarc-cat 0.2.0
+//! Ollivier Robert <roberto@keltia.net>
+//! Rust utility to decode and display DMARC reports.
+//!
+//! USAGE:
+//!     dmarc-cat [OPTIONS] [FILES]...
+//!
+//! ARGS:
+//!     <FILES>...    Filenames (possibly none or -)
+//!
+//! OPTIONS:
+//!     -D, --debug                 debug mode
+//!     -h, --help                  Print help information
+//!     -j, --jobs <JOBS>           Use this many parallel jobs for resolving IP [default: 6]
+//!     -N, --no-resolve            Do not resolve IP to names
+//!     -t, --input-type <ITYPE>    Specify the type of input data
+//!     -v, --verbose               Verbose mode
+//!     -V, --version               Display version and exit
+//! ```
+//! 
 //! ## Columns
 //!
 //! The full XML grammar is available here: [dmarc.xsd](https://tools.ietf.org/html/rfc7489#appendix-C)
@@ -18,11 +41,6 @@
 //! - `RDKIM` is the result from DKIM checking
 //! - `RSPF` is the result from SPF checking
 //!
-//! ## Notes
-//!
-//! The package is still named `dmarc_rs` to distinguish it from the [Go] version
-//! but the binary will remain the same (`dmarc-cat`) and can totally replace it.
-//!
 //! ## References
 //!
 //! - [DMARC](https://dmarc.org/)
@@ -30,7 +48,6 @@
 //! - [SPF](http://www.rfc-editor.org/info/rfc7208)
 //! - [DKIM](http://www.rfc-editor.org/info/rfc6376)
 //!
-//! [Go]: https://golang.org/
 
 // Internal crates
 //
