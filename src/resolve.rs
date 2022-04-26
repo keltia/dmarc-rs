@@ -40,12 +40,15 @@ use crate::ip::IP;
 
 // Std library
 //
-use crate::ip::IP;
+use std::error::Error;
+use std::thread;
+use std::sync::mpsc::{channel, Receiver};
 
 // External crates
 //
 use anyhow::Result;
 use dns_lookup::lookup_addr;
+use threadpool::ThreadPool;
 
 /// List of IP tuples.
 ///
@@ -80,13 +83,23 @@ impl IPList {
     /// list.
     ///
     /// Example:
+    /// ```no_run
+    /// # use dmarc_rs::ip::IP;
+    /// # use dmarc_rs::resolve::IPList;
+    /// let mut l = IPList::new();
+    /// l.push(IP::new( "1.1.1.1"));
+    /// l.push(IP::new( "2606:4700:4700::1111"));
+    /// l.push(IP::new( "192.0.2.1"));
     ///
-    pub fn parallel_solve(self, njobs: usize) -> IPList {
+    /// let ptr = l.parallel_solve(4);
+    /// ```
+    ///
+    pub fn parallel_solve(&self, njobs: usize) -> IPList {
         let mut full = IPList::new();
         let s = self.list.len();
 
         let pool = ThreadPool::new(njobs);
-        let rx_gen = queue(self).unwrap();
+        let rx_gen = self.queue().unwrap();
         let rx_out = fan_out(rx_gen, pool, s).unwrap();
         for ip in fan_in(rx_out).unwrap() {
             full.list.push(ip);
@@ -95,16 +108,29 @@ impl IPList {
         full
     }
 
-    pub fn push(mut self, ip: IP) {
-        self.list.push(ip);
+    /// Take all values from the list and send them into a queue
+    ///
+    fn queue(&self) -> Result<Receiver<IP>> {
+        let (tx, rx) = channel();
+
+        // construct a copy of the list
+        let all: Vec<IP> = self.list.iter().map(|ip| ip.clone()).collect();
+
+        // use that copy to send over
+        thread::spawn(move || {
+            for ip in all.iter() {
+                tx.send(ip.clone()).expect("can not queue")
+            }
+        });
+        Ok(rx)
     }
 
     /// Simple and straightforward sequential solver
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::resolve::{simple_solve,IP,IPList};
-    ///
+    /// # use dmarc_rs::resolve::{IPList};
+    /// # use dmarc_rs::ip::IP;
     /// let mut l = IPList::new();
     /// l.push(IP::new( "1.1.1.1"));
     /// l.push(IP::new( "2606:4700:4700::1111"));
@@ -113,7 +139,7 @@ impl IPList {
     /// let ptr = l.simple_solve();
     /// ```
     ///
-    pub fn simple_solve(self) -> Self {
+    pub fn simple_solve(&self) -> Self {
         let mut r = IPList::new();
 
         for ip in self.list.iter() {
@@ -129,7 +155,6 @@ impl IPList {
     /// ```
     /// # use dmarc_rs::ip::IP;
     /// # use dmarc_rs::resolve::IPList;
-    ///
     /// let mut l = IPList::new();
     /// l.push(IP::new("1.1.1.1"));
     /// ```
@@ -139,22 +164,10 @@ impl IPList {
     }
 }
 
-use std::error::Error;
-use std::thread;
-use std::sync::mpsc::{channel, Receiver};
-use threadpool::ThreadPool;
+// --- Private functions
 
-fn queue(l: IPList) -> Result<Receiver<IP>> {
-    let (tx, rx) = channel();
-
-    thread::spawn(move || {
-        for ip in l.list.iter() {
-            tx.send(ip.clone()).expect("can not queue")
-        }
-    });
-    Ok(rx)
-}
-
+/// Start enough workers to resolve IP into PTR.
+///
 fn fan_out(rx_gen: Receiver<IP>, pool: ThreadPool, njobs: usize) -> Result<Receiver<IP>, Box<dyn Error>> {
     let (tx, rx) = channel();
 
@@ -171,6 +184,8 @@ fn fan_out(rx_gen: Receiver<IP>, pool: ThreadPool, njobs: usize) -> Result<Recei
     Ok(rx)
 }
 
+/// Gather all results into an output channel
+///
 fn fan_in(rx_out: Receiver<IP>) -> Result<Receiver<IP>, Box<dyn Error>> {
     let (tx, rx) = channel();
     thread::spawn(move || {
@@ -180,30 +195,6 @@ fn fan_in(rx_out: Receiver<IP>) -> Result<Receiver<IP>, Box<dyn Error>> {
         }
     });
     Ok(rx)
-}
-
-/// Simple and straightforward sequential solver
-///
-/// Example:
-/// ```
-/// # use dmarc_rs::resolve::{simple_solve,IP,IPList};
-///
-/// let mut l = IPList::new();
-/// l.push(IP::new( "1.1.1.1"));
-/// l.push(IP::new( "2606:4700:4700::1111"));
-/// l.push(IP::new( "192.0.2.1"));
-///
-/// let ptr = simple_solve(l);
-/// ```
-///
-pub fn simple_solve(l: IPList) -> IPList {
-    let mut r = IPList::new();
-
-    for ip in l {
-        let ip = ip.solve();
-        r.push(ip.clone());
-    }
-    r
 }
 
 #[cfg(test)]
@@ -226,37 +217,47 @@ mod tests {
     fn test_parallel_solve_empty() {
         let a = IPList::new();
 
-        assert!(parallel_solve(a).is_empty())
+        let r = a.parallel_solve(num_cpus::get_physical());
+        assert!(r.list.is_empty())
     }
 
     #[test]
     fn test_simple_solve_empty() {
         let a = IPList::new();
+        let r = a.simple_solve();
 
-        assert!(simple_solve(a).is_empty())
+        assert!(r.list.is_empty())
     }
 
     #[test]
     fn test_simple_solve_ok() {
         let mut l = IPList::new();
 
-        l.push(IP::new ( "1.1.1.1"));
-        l.push(IP::new ( "2606:4700:4700::1111"));
-        l.push(IP::new ( "192.0.2.1"));
+        l.push(IP::new("1.1.1.1"));
+        l.push(IP::new("2606:4700:4700::1111"));
+        l.push(IP::new("192.0.2.1"));
 
-        let ptr = simple_solve(l);
+        let ptr = l.simple_solve();
 
-        assert_eq!(ptr[0].name.to_string(), "one.one.one.one");
-        assert_eq!(ptr[1].name.to_string(), "one.one.one.one");
-        assert_eq!(ptr[2].name.to_string(), "some.host.invalid");
+        assert_eq!(l.list.len(), ptr.list.len());
+        assert_eq!(ptr.list[0].name.to_string(), "one.one.one.one");
+        assert_eq!(ptr.list[1].name.to_string(), "one.one.one.one");
+        assert_eq!(ptr.list[2].name.to_string(), "some.host.invalid");
     }
 
     #[test]
-    fn test_new_from_tuple() {
-        let exp = IP { ip: "1.1.1.1".parse::<IpAddr>().unwrap(), name: "one.one.one.one".into() };
+    fn test_parallel_solve_ok() {
+        let mut l = IPList::new();
 
-        let t = IP::from(("1.1.1.1", "one.one.one.one"));
+        l.push(IP::new("1.1.1.1"));
+        l.push(IP::new("2606:4700:4700::1111"));
+        l.push(IP::new("192.0.2.1"));
 
-        assert_eq!(exp, t);
+        let ptr = l.parallel_solve(num_cpus::get_physical());
+
+        assert_eq!(ptr.list[0].name.to_string(), "one.one.one.one");
+        assert_eq!(ptr.list[1].name.to_string(), "one.one.one.one");
+        assert_eq!(ptr.list[2].name.to_string(), "192.0.2.1");
     }
+
 }
