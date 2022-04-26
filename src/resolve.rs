@@ -38,12 +38,41 @@
 //
 use crate::ip::IP;
 
+// Std library
+//
+use crate::ip::IP;
+
 // External crates
 //
+use anyhow::Result;
 use dns_lookup::lookup_addr;
 
 /// List of IP tuples.
-pub type IPList = Vec<IP>;
+///
+/// This is now a distinct type instead of an alias, it is easier to add stuff into it.
+///
+#[derive(Debug)]
+pub struct IPList {
+    pub list: Vec<IP>,
+}
+
+/// Methods for IPList
+///
+impl IPList {
+    /// Basic new()
+    ///
+    /// Example:
+    /// ```
+    /// # use dmarc_rs::resolve::IPList;
+    /// let l = IPList::new();
+    /// assert!(l.list.is_empty());
+    /// ```
+    ///
+    pub fn new() -> Self {
+        IPList {
+            list: vec!(),
+        }
+    }
 
     /// Convert a list of IP into names with multiple threads
     ///
