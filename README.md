@@ -45,9 +45,13 @@ is enough to fetch, build and install.
 
 On Windows systems, the above `cargo` command should work directly in a Powershell window.
 
+### Packaging
+
+I will insert here references to the binary packages in different distributions when available.
+
 ## Dependencies
 
-The main parsing stuff is done by `serde & associates and CLI handling is `clap`:
+The main XML parsing stuff is done by `serde` & associates and CLI handling is done with `clap`:
 
 - [clap](https://lib.rs/crates/clap)
 - [serde](https://libs.rs/crates/serde)
@@ -63,12 +67,12 @@ It also use the following crates for DNS resolving/threading from the report.
 - [dns-lookup](https://lib.rs/crates/dns-lookup)
 - [ThreadPool](https://lib.rs/crates/threadpool)
 
-and a few other helper crates.
+and a few other helper crates, especially if you want to run the tests.
 
 ## Usage
 
 SYNOPSIS
-```
+```console
 dmarc-cat 0.2.0
 Ollivier Robert <roberto@keltia.net>
 Rust utility to decode and display DMARC reports.
@@ -87,9 +91,10 @@ OPTIONS:
     -t, --input-type <ITYPE>    Specify the type of input data
     -v, --verbose               Verbose mode
     -V, --version               Display version and exit
+```
         	
 Example:
-
+```console
 $ dmarc-cat /tmp/yahoo.com\!keltia.net\!1518912000\!1518998399.xml
 
 Reporting by: Yahoo! Inc. — postmaster@dmarc.yahoo.com
@@ -119,11 +124,11 @@ The report has several columns:
 
 ## Supported formats
 
-The file sent by MTAs can differ in format, some providers send zip files with both csv and XML files, some directly send compressed XML files.  The `archive` module should support all these, please open an issue if not.
+The file sent by MTAs can differ in format, some providers send zip files with both csv and XML files, some directly send compressed XML files.  This utility should handle the different format but you will have to use `-t TYPE` if you want to read from standard input.
 
 ## Tests
 
-Getting close to 90% coverage.
+Tests are available as unit-tests for the library part and as integration tests for the CLI interaction (see `tests/cli.rs`).
 
 ## References
 
