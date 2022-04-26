@@ -150,6 +150,17 @@ mod tests {
     use crate::ip::IP;
 
     #[test]
+    fn test_push() {
+        let mut l = IPList::new();
+
+        l.push(IP::new("9.9.9.9"));
+        l.push(IP::new("1.0.0.1"));
+
+        assert_eq!(2, l.list.len());
+        assert_eq!("9.9.9.9", l.list[0].ip.to_string());
+    }
+
+    #[test]
     fn test_parallel_solve_empty() {
         let a = IPList::new();
 
