@@ -102,7 +102,7 @@ impl IpList {
         let rx_gen = self.queue().unwrap();
         let rx_out = fan_out(rx_gen, pool, s).unwrap();
         for ip in fan_in(rx_out).unwrap() {
-            full.list.push(ip);
+            full.push(ip);
         }
         dbg!(&full);
         full
