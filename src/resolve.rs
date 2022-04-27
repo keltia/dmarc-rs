@@ -179,6 +179,81 @@ impl IpList {
     }
 }
 
+/// We want to iterate on IPList as if were on IPList.list itself.
+///
+impl Iterator for IpList {
+    type Item = Ip;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        match self.list.iter().next() {
+            Some(ip) => Some(ip.clone()),
+            None => None,
+        }
+    }
+}
+
+/// Create an `IpList` from an iterator of `&str`.
+///
+/// Example:
+/// ```
+/// use dmarc_rs::resolve::IpList;
+///
+/// let l = IpList::from([("1.1.1.1", "one.one.one.one"), ("2606:4700:4700::1111", "one.one.one.one")]);
+///
+/// assert_eq!(2, l.len());
+/// ```
+///
+impl<const N: usize> From<[(&str,&str);N]> for IpList {
+    fn from(arr: [(&str, &str); N]) -> Self {
+        Self::from_iter(arr)
+    }
+}
+
+/// Create an `IpList` from an iterator of `(&str,&str)` tuples.
+///
+/// Example:
+/// ```
+/// use dmarc_rs::resolve::IpList;
+///
+/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+///
+/// assert_eq!(3, l.len());
+/// ```
+///
+impl<const N: usize> From<[&str;N]> for IpList {
+    fn from(arr: [&str; N]) -> Self {
+        Self::from_iter(arr)
+    }
+}
+
+/// Actual implementation of `IpList::from_iter` for an array of `&str`
+///
+impl<'a> FromIterator<&'a str> for IpList
+{
+    fn from_iter<T: IntoIterator<Item=&'a str>>(iter: T) -> Self {
+        let mut ipl = IpList::new();
+
+        for ip in iter {
+            ipl.push(Ip::new(ip))
+        }
+        ipl
+    }
+}
+
+/// Actual implementation of `IpList::from_iter` for an array of `(&str,&str)` tuples
+///
+impl<'a> FromIterator<(&'a str,&'a str)> for IpList
+{
+    fn from_iter<T: IntoIterator<Item=(&'a str, &'a str)>>(iter: T) -> Self {
+        let mut ipl = IpList::new();
+
+        for (ip, name) in iter {
+            ipl.push(Ip::from((ip, name)))
+        }
+        ipl
+    }
+}
+
 // --- Private functions
 
 /// Start enough workers to resolve IP into PTR.
@@ -245,11 +320,7 @@ mod tests {
 
     #[test]
     fn test_simple_solve_ok() {
-        let mut l = IpList::new();
-
-        l.push(Ip::new("1.1.1.1"));
-        l.push(Ip::new("2606:4700:4700::1111"));
-        l.push(Ip::new("192.0.2.1"));
+        let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 
         let ptr = l.simple_solve();
 
@@ -261,11 +332,7 @@ mod tests {
 
     #[test]
     fn test_parallel_solve_ok() {
-        let mut l = IPList::new();
-
-        l.push(IP::new("1.1.1.1"));
-        l.push(IP::new("2606:4700:4700::1111"));
-        l.push(IP::new("192.0.2.1"));
+        let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 
         let ptr = l.parallel_solve(num_cpus::get_physical());
 
