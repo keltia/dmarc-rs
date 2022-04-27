@@ -184,6 +184,21 @@ impl IpList {
     pub fn len(&self) -> usize {
         self.list.len()
     }
+
+    /// Implement is_empty() as a complement to len()
+    ///
+    /// Example:
+    /// ```
+    /// use dmarc_rs::resolve::IpList;
+    ///
+    /// let ipl = IpList::from(["1.0.0.1", "1.1.1.1"]);
+    ///
+    /// assert!(!ipl.is_empty());
+    /// ```
+    ///
+    pub fn is_empty(&self) -> bool {
+        self.list.is_empty()
+    }
 }
 
 /// We want to iterate on IPList as if were on IPList.list itself.
