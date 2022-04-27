@@ -190,8 +190,7 @@ fn fan_out(rx_gen: Receiver<Ip>, pool: ThreadPool, njobs: usize) -> Result<Recei
         let tx = tx.clone();
         let n = rx_gen.recv().unwrap();
         pool.execute(move || {
-            let name = lookup_addr(&n.ip).unwrap();
-            let r = Ip { ip: n.ip, name: name };
+            let r = n.solve();
             tx.send(r)
                 .expect("waiting channel");
         });
@@ -272,7 +271,7 @@ mod tests {
 
         assert_eq!(ptr.list[0].name.to_string(), "one.one.one.one");
         assert_eq!(ptr.list[1].name.to_string(), "one.one.one.one");
-        assert_eq!(ptr.list[2].name.to_string(), "192.0.2.1");
+        assert_eq!(ptr.list[2].name.to_string(), "some.host.invalid");
     }
 
 }
