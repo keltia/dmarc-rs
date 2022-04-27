@@ -47,7 +47,6 @@ use std::sync::mpsc::{channel, Receiver};
 // External crates
 //
 use anyhow::Result;
-use dns_lookup::lookup_addr;
 use threadpool::ThreadPool;
 
 /// List of IP tuples.
