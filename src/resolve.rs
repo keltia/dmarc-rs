@@ -36,7 +36,7 @@
 
 // Our crates
 //
-use crate::ip::IP;
+use crate::ip::Ip;
 
 // Std library
 //
@@ -56,7 +56,7 @@ use threadpool::ThreadPool;
 ///
 #[derive(Debug)]
 pub struct IPList {
-    pub list: Vec<IP>,
+    pub list: Vec<Ip>,
 }
 
 /// Methods for IPList
@@ -84,12 +84,12 @@ impl IPList {
     ///
     /// Example:
     /// ```no_run
-    /// # use dmarc_rs::ip::IP;
+    /// # use dmarc_rs::ip::Ip;
     /// # use dmarc_rs::resolve::IPList;
     /// let mut l = IPList::new();
-    /// l.push(IP::new( "1.1.1.1"));
-    /// l.push(IP::new( "2606:4700:4700::1111"));
-    /// l.push(IP::new( "192.0.2.1"));
+    /// l.push(Ip::new( "1.1.1.1"));
+    /// l.push(Ip::new( "2606:4700:4700::1111"));
+    /// l.push(Ip::new( "192.0.2.1"));
     ///
     /// let ptr = l.parallel_solve(4);
     /// ```
@@ -110,11 +110,11 @@ impl IPList {
 
     /// Take all values from the list and send them into a queue
     ///
-    fn queue(&self) -> Result<Receiver<IP>> {
+    fn queue(&self) -> Result<Receiver<Ip>> {
         let (tx, rx) = channel();
 
         // construct a copy of the list
-        let all: Vec<IP> = self.list.iter().map(|ip| ip.clone()).collect();
+        let all: Vec<Ip> = self.list.iter().map(|ip| ip.clone()).collect();
 
         // use that copy to send over
         thread::spawn(move || {
@@ -130,11 +130,11 @@ impl IPList {
     /// Example:
     /// ```
     /// # use dmarc_rs::resolve::{IPList};
-    /// # use dmarc_rs::ip::IP;
+    /// # use dmarc_rs::ip::Ip;
     /// let mut l = IPList::new();
-    /// l.push(IP::new( "1.1.1.1"));
-    /// l.push(IP::new( "2606:4700:4700::1111"));
-    /// l.push(IP::new( "192.0.2.1"));
+    /// l.push(Ip::new( "1.1.1.1"));
+    /// l.push(Ip::new( "2606:4700:4700::1111"));
+    /// l.push(Ip::new( "192.0.2.1"));
     ///
     /// let ptr = l.simple_solve();
     /// ```
@@ -153,13 +153,13 @@ impl IPList {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::ip::IP;
+    /// # use dmarc_rs::ip::Ip;
     /// # use dmarc_rs::resolve::IPList;
     /// let mut l = IPList::new();
-    /// l.push(IP::new("1.1.1.1"));
+    /// l.push(Ip::new("1.1.1.1"));
     /// ```
     ///
-    pub fn push(&mut self, ip: IP) {
+    pub fn push(&mut self, ip: Ip) {
         self.list.push(ip);
     }
 
@@ -167,10 +167,10 @@ impl IPList {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::ip::IP;
+    /// # use dmarc_rs::ip::Ip;
     /// # use dmarc_rs::resolve::IPList;
     /// let mut l = IPList::new();
-    /// l.push(IP::new("1.1.1.1"));
+    /// l.push(Ip::new("1.1.1.1"));
     /// println!("length of l is {}", l.len())
     /// ```
     ///
@@ -183,7 +183,7 @@ impl IPList {
 
 /// Start enough workers to resolve IP into PTR.
 ///
-fn fan_out(rx_gen: Receiver<IP>, pool: ThreadPool, njobs: usize) -> Result<Receiver<IP>, Box<dyn Error>> {
+fn fan_out(rx_gen: Receiver<Ip>, pool: ThreadPool, njobs: usize) -> Result<Receiver<Ip>, Box<dyn Error>> {
     let (tx, rx) = channel();
 
     for _ in 0..njobs {
@@ -191,7 +191,7 @@ fn fan_out(rx_gen: Receiver<IP>, pool: ThreadPool, njobs: usize) -> Result<Recei
         let n = rx_gen.recv().unwrap();
         pool.execute(move || {
             let name = lookup_addr(&n.ip).unwrap();
-            let r = IP { ip: n.ip, name: name };
+            let r = Ip { ip: n.ip, name: name };
             tx.send(r)
                 .expect("waiting channel");
         });
@@ -201,7 +201,7 @@ fn fan_out(rx_gen: Receiver<IP>, pool: ThreadPool, njobs: usize) -> Result<Recei
 
 /// Gather all results into an output channel
 ///
-fn fan_in(rx_out: Receiver<IP>) -> Result<Receiver<IP>, Box<dyn Error>> {
+fn fan_in(rx_out: Receiver<Ip>) -> Result<Receiver<Ip>, Box<dyn Error>> {
     let (tx, rx) = channel();
     thread::spawn(move || {
         for ip in rx_out.iter() {
@@ -215,14 +215,14 @@ fn fan_in(rx_out: Receiver<IP>) -> Result<Receiver<IP>, Box<dyn Error>> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ip::IP;
+    use crate::ip::Ip;
 
     #[test]
     fn test_push() {
         let mut l = IPList::new();
 
-        l.push(IP::new("9.9.9.9"));
-        l.push(IP::new("1.0.0.1"));
+        l.push(Ip::new("9.9.9.9"));
+        l.push(Ip::new("1.0.0.1"));
 
         assert_eq!(2, l.len());
         assert_eq!("9.9.9.9", l.list[0].ip.to_string());
@@ -248,9 +248,9 @@ mod tests {
     fn test_simple_solve_ok() {
         let mut l = IPList::new();
 
-        l.push(IP::new("1.1.1.1"));
-        l.push(IP::new("2606:4700:4700::1111"));
-        l.push(IP::new("192.0.2.1"));
+        l.push(Ip::new("1.1.1.1"));
+        l.push(Ip::new("2606:4700:4700::1111"));
+        l.push(Ip::new("192.0.2.1"));
 
         let ptr = l.simple_solve();
 
