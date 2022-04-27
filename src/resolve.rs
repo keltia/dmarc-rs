@@ -7,9 +7,9 @@
 //!
 //! Examples:
 //! ```rust
-//! use dmarc_rs::resolve::IPList;
+//! use dmarc_rs::resolve::IpList;
 //!
-//! let l = IPList::new();
+//! let l = IpList::new();
 //! // populate here the list of IP tuples
 //!
 //! // Use the simple solver
@@ -18,14 +18,14 @@
 //! ```
 //! and with the parallel solver:
 //! ```rust
-//! use dmarc_rs::resolve::IPList;
+//! use dmarc_rs::resolve::IpList;
 //! use num_cpus::get_physical;
 //!
 //! // Get the number of physical cores, I prefer to use this one instead of the potentially
 //! // larger total cores because Hyperthreading has some overhead.
 //! let njobs = get_physical();
 //!
-//! let l = IPList::new();
+//! let l = IpList::new();
 //! // populate here the list of IP tuples
 //! // ...
 //! // Use the parallel solver
@@ -55,24 +55,24 @@ use threadpool::ThreadPool;
 /// This is now a distinct type instead of an alias, it is easier to add stuff into it.
 ///
 #[derive(Debug)]
-pub struct IPList {
+pub struct IpList {
     pub list: Vec<Ip>,
 }
 
 /// Methods for IPList
 ///
-impl IPList {
+impl IpList {
     /// Basic new()
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::resolve::IPList;
-    /// let l = IPList::new();
+    /// # use dmarc_rs::resolve::IpList;
+    /// let l = IpList::new();
     /// assert!(l.list.is_empty());
     /// ```
     ///
     pub fn new() -> Self {
-        IPList {
+        IpList {
             list: vec!(),
         }
     }
@@ -85,8 +85,8 @@ impl IPList {
     /// Example:
     /// ```no_run
     /// # use dmarc_rs::ip::Ip;
-    /// # use dmarc_rs::resolve::IPList;
-    /// let mut l = IPList::new();
+    /// # use dmarc_rs::resolve::IpList;
+    /// let mut l = IpList::new();
     /// l.push(Ip::new( "1.1.1.1"));
     /// l.push(Ip::new( "2606:4700:4700::1111"));
     /// l.push(Ip::new( "192.0.2.1"));
@@ -94,9 +94,9 @@ impl IPList {
     /// let ptr = l.parallel_solve(4);
     /// ```
     ///
-    pub fn parallel_solve(&self, njobs: usize) -> IPList {
-        let mut full = IPList::new();
-        let s = self.list.len();
+    pub fn parallel_solve(&self, njobs: usize) -> IpList {
+        let mut full = IpList::new();
+        let s = self.len();
 
         let pool = ThreadPool::new(njobs);
         let rx_gen = self.queue().unwrap();
@@ -129,9 +129,9 @@ impl IPList {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::resolve::{IPList};
+    /// # use dmarc_rs::resolve::{IpList};
     /// # use dmarc_rs::ip::Ip;
-    /// let mut l = IPList::new();
+    /// let mut l = IpList::new();
     /// l.push(Ip::new( "1.1.1.1"));
     /// l.push(Ip::new( "2606:4700:4700::1111"));
     /// l.push(Ip::new( "192.0.2.1"));
@@ -140,7 +140,7 @@ impl IPList {
     /// ```
     ///
     pub fn simple_solve(&self) -> Self {
-        let mut r = IPList::new();
+        let mut r = IpList::new();
 
         for ip in self.list.iter() {
             let ip = ip.solve();
@@ -154,8 +154,8 @@ impl IPList {
     /// Example:
     /// ```
     /// # use dmarc_rs::ip::Ip;
-    /// # use dmarc_rs::resolve::IPList;
-    /// let mut l = IPList::new();
+    /// # use dmarc_rs::resolve::IpList;
+    /// let mut l = IpList::new();
     /// l.push(Ip::new("1.1.1.1"));
     /// ```
     ///
@@ -168,8 +168,8 @@ impl IPList {
     /// Example:
     /// ```
     /// # use dmarc_rs::ip::Ip;
-    /// # use dmarc_rs::resolve::IPList;
-    /// let mut l = IPList::new();
+    /// # use dmarc_rs::resolve::IpList;
+    /// let mut l = IpList::new();
     /// l.push(Ip::new("1.1.1.1"));
     /// println!("length of l is {}", l.len())
     /// ```
@@ -219,7 +219,7 @@ mod tests {
 
     #[test]
     fn test_push() {
-        let mut l = IPList::new();
+        let mut l = IpList::new();
 
         l.push(Ip::new("9.9.9.9"));
         l.push(Ip::new("1.0.0.1"));
@@ -230,7 +230,7 @@ mod tests {
 
     #[test]
     fn test_parallel_solve_empty() {
-        let a = IPList::new();
+        let a = IpList::new();
 
         let r = a.parallel_solve(num_cpus::get_physical());
         assert!(r.list.is_empty())
@@ -238,7 +238,7 @@ mod tests {
 
     #[test]
     fn test_simple_solve_empty() {
-        let a = IPList::new();
+        let a = IpList::new();
         let r = a.simple_solve();
 
         assert!(r.list.is_empty())
@@ -246,7 +246,7 @@ mod tests {
 
     #[test]
     fn test_simple_solve_ok() {
-        let mut l = IPList::new();
+        let mut l = IpList::new();
 
         l.push(Ip::new("1.1.1.1"));
         l.push(Ip::new("2606:4700:4700::1111"));
