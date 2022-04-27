@@ -121,7 +121,7 @@ impl IpList {
         let (tx, rx) = channel();
 
         // construct a copy of the list
-        let all: Vec<Ip> = self.list.iter().map(|ip| ip.clone()).collect();
+        let all: Vec<Ip> = self.list.clone();
 
         // use that copy to send over
         thread::spawn(move || {
