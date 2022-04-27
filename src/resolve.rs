@@ -325,6 +325,27 @@ mod tests {
     }
 
     #[test]
+    fn test_len() {
+        let mut ipl = IpList::new();
+
+        assert_eq!(0, ipl.len());
+
+        ipl.push(Ip::new("1.0.0.1"));
+        assert_eq!(1, ipl.len());
+    }
+
+    #[test]
+    fn test_is_empty() {
+        let mut ipl = IpList::new();
+
+        assert!(ipl.is_empty());
+
+        ipl.push(Ip::new("1.0.0.1"));
+        assert_eq!(false, ipl.is_empty());
+    }
+
+
+    #[test]
     fn test_parallel_solve_empty() {
         let a = IpList::new();
 
