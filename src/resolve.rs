@@ -58,6 +58,14 @@ pub struct IpList {
     pub list: Vec<Ip>,
 }
 
+/// Implement the Default Trait.
+///
+impl Default for IpList {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// Methods for IPList
 ///
 impl IpList {
