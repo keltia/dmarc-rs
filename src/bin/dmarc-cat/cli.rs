@@ -1,5 +1,6 @@
 //! Actual command-line parsing module
 
+use std::path::PathBuf;
 // External crates
 //
 use clap::{crate_authors, crate_description, crate_version, AppSettings, Parser};
@@ -33,5 +34,5 @@ pub struct Opts {
     #[clap(short = 't', long = "input-type")]
     pub itype: Option<String>,
     /// Filenames (possibly none or -)
-    pub files: Vec<String>,
+    pub files: Vec<PathBuf>,
 }

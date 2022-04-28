@@ -56,7 +56,6 @@ pub mod version;
 
 // Std library
 //
-use std::path::Path;
 
 // Our crates
 //
@@ -97,10 +96,9 @@ fn main() -> Result<()> {
         println!("{:?}", opts.files);
 
         for f in opts.files.iter() {
-            let p = Path::new(f);
-            match p.exists() {
-                true => println!("file: {:?}", p),
-                false => return Err(anyhow!("Unknown file {:?}", p)),
+            match f.exists() {
+                true => println!("file: {:?}", f),
+                false => return Err(anyhow!("Unknown file {:?}", f)),
             }
         }
     }
