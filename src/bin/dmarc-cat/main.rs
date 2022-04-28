@@ -55,8 +55,9 @@ pub mod cli;
 pub mod version;
 
 // Std library
-
+//
 use std::path::Path;
+
 // Our crates
 //
 use cli::Opts;
