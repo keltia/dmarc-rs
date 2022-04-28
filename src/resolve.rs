@@ -76,7 +76,7 @@ impl IpList {
     /// ```
     /// # use dmarc_rs::resolve::IpList;
     /// let l = IpList::new();
-    /// assert!(l.list.is_empty());
+    /// assert!(l.is_empty());
     /// ```
     ///
     pub fn new() -> Self {
