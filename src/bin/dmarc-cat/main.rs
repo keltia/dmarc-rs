@@ -86,12 +86,12 @@ fn main() -> Result<()> {
     //
     if opts.files.is_empty() {
         // Assume stdin
-        match opts.itype {
-            None => panic!("-t MUST be provided"),
+        ftype = match opts.itype {
             Some(it) => match valid_input(&it) {
-                Ok(it) => ftype = it,
-                _ => panic!("Invalid type for -t"),
+                Ok(it) => it,
+                _ => return Err(anyhow!("Invalid type for -t")),
             },
+            None => return Err(anyhow!("-t MUST be provided")),
         }
     } else {
         println!("{:?}", opts.files);
