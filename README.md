@@ -14,6 +14,7 @@
 
 [dmarc-rs: 1.56+]: https://img.shields.io/badge/Rust%20version-1.56%2B-lightgrey
 [Rust 1.56]: https://blog.rust-lang.org/2021/10/21/Rust-1.56.0.html
+[Go]: https://golang.org/
 
 Licensed under the [MIT](LICENSE).
 
@@ -35,6 +36,10 @@ Licensed under the [MIT](LICENSE).
     * cmd.exe
     * Powershell
 
+## Notes
+
+The package is named `dmarc_rs` to distinguish it from the [Go] version but the binary will remain the same (`dmarc-cat`) and can totally replace it.
+
 ## Installation
 
 As with many Rust utilities, a simple
@@ -45,10 +50,15 @@ is enough to fetch, build and install.
 
 On Windows systems, the above `cargo` command should work directly in a Powershell window.
 
+### Packaging
+
+I will insert here references to the binary packages in different distributions when available.
+
 ## Dependencies
 
-The main parsing stuff is done by `serde & associates:
+The main XML parsing stuff is done by `serde` & associates and CLI handling is done with `clap`:
 
+- [clap](https://lib.rs/crates/clap)
 - [serde](https://libs.rs/crates/serde)
 - [serde-xmls-rs](https://libs.rs/crates/serde-xml-rs)
 
@@ -57,32 +67,40 @@ The main parsing stuff is done by `serde & associates:
 - [zip](https://lib.rs/crates/zip)
 - [flate2](https://lib.rs/crates/flate2)
 
-It also use the `dns-lookup` crate to resolve the IP from the report.
+It also use the following crates for DNS resolving/threading from the report.
 
 - [dns-lookup](https://lib.rs/crates/dns-lookup)
+- [ThreadPool](https://lib.rs/crates/threadpool)
+
+and a few other helper crates, especially if you want to run the tests.
 
 ## Usage
 
 SYNOPSIS
+```console
+dmarc-cat 0.2.0
+Ollivier Robert <roberto@keltia.net>
+Rust utility to decode and display DMARC reports.
+
+USAGE:
+    dmarc-cat [OPTIONS] [FILES]...
+
+ARGS:
+    <FILES>...    Filenames (possibly none or -)
+
+OPTIONS:
+    -D, --debug                 debug mode
+    -h, --help                  Print help information
+    -j, --jobs <JOBS>           Use this many parallel jobs for resolving IP [default: 6]
+    -N, --no-resolve            Do not resolve IP to names
+    -t, --input-type <ITYPE>    Specify the type of input data
+    -v, --verbose               Verbose mode
+    -V, --version               Display version and exit
 ```
-dmarc-rs -hvDN [-j N] [-t type] [-S sort] [-version] <zipfile|xmlfile>
-
-Usage of ./dmarc-rs:
-  -D	Debug mode
-  -N	Do not resolve IPs
-  -S string
-    	Sort results (default "\"Count\" \"dsc\"")
-  -j int
-    	Parallel jobs (default 8)
-  -t string
-    	File type for stdin mode
-  -v	Verbose mode
-  -version
-    	Display version
-    	
+        	
 Example:
-
-$ dmarc-rs /tmp/yahoo.com\!keltia.net\!1518912000\!1518998399.xml
+```console
+$ dmarc-cat /tmp/yahoo.com\!keltia.net\!1518912000\!1518998399.xml
 
 Reporting by: Yahoo! Inc. — postmaster@dmarc.yahoo.com
 From 2018-02-18 01:00:00 +0100 CET to 2018-02-19 00:59:59 +0100 CET
@@ -97,7 +115,8 @@ IP            Count   From       RFrom      RDKIM   RSPF
 
 ## Columns
 
-The full XML grammar is available [here](https://tools.ietf.org/html/rfc7489#appendix-C)
+The full XML grammar is available [here](https://tools.ietf.org/html/rfc7489#appendix-C) and there is a local
+copy in the `doc/` directory in the source.
 
 The report has several columns:
 
@@ -110,11 +129,11 @@ The report has several columns:
 
 ## Supported formats
 
-The file sent by MTAs can differ in format, some providers send zip files with both csv and XML files, some directly send compressed XML files.  The `archive` module should support all these, please open an issue if not.
+The file sent by MTAs can differ in format, some providers send zip files with both csv and XML files, some directly send compressed XML files.  This utility should handle the different format but you will have to use `-t TYPE` if you want to read from standard input.
 
 ## Tests
 
-Getting close to 90% coverage.
+Tests are available as unit-tests for the library part and as integration tests for the CLI interaction (see `tests/cli.rs`).
 
 ## References
 
@@ -123,6 +142,8 @@ Getting close to 90% coverage.
 - [DKIM](http://www.rfc-editor.org/info/rfc6376)
 
 ## Contributing
+
+Please see [CONTRIBUTING.md](CONTRIBUTING.md) for some simple rules.
 
 I use Git Flow for this package so please use something similar or the usual github workflow.
 

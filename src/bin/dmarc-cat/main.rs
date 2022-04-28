@@ -4,6 +4,29 @@
 //! the content of the DMARC XML reports sent by the various email providers around the globe.
 //! Should work properly on UNIX (FreeBSD, Linux, etc.) and Windows systems.
 //!
+//! ## Usage
+//!
+//! ```console
+//! dmarc-cat 0.2.0
+//! Ollivier Robert <roberto@keltia.net>
+//! Rust utility to decode and display DMARC reports.
+//!
+//! USAGE:
+//!     dmarc-cat [OPTIONS] [FILES]...
+//!
+//! ARGS:
+//!     <FILES>...    Filenames (possibly none or -)
+//!
+//! OPTIONS:
+//!     -D, --debug                 debug mode
+//!     -h, --help                  Print help information
+//!     -j, --jobs <JOBS>           Use this many parallel jobs for resolving IP [default: 6]
+//!     -N, --no-resolve            Do not resolve IP to names
+//!     -t, --input-type <ITYPE>    Specify the type of input data
+//!     -v, --verbose               Verbose mode
+//!     -V, --version               Display version and exit
+//! ```
+//!
 //! ## Columns
 //!
 //! The full XML grammar is available here: [dmarc.xsd](https://tools.ietf.org/html/rfc7489#appendix-C)
@@ -18,11 +41,6 @@
 //! - `RDKIM` is the result from DKIM checking
 //! - `RSPF` is the result from SPF checking
 //!
-//! ## Notes
-//!
-//! The package is still named `dmarc_rs` to distinguish it from the [Go] version
-//! but the binary will remain the same (`dmarc-cat`) and can totally replace it.
-//!
 //! ## References
 //!
 //! - [DMARC](https://dmarc.org/)
@@ -30,7 +48,6 @@
 //! - [SPF](http://www.rfc-editor.org/info/rfc7208)
 //! - [DKIM](http://www.rfc-editor.org/info/rfc6376)
 //!
-//! [Go]: https://golang.org/
 
 // Internal crates
 //
@@ -38,6 +55,8 @@ pub mod cli;
 pub mod version;
 
 // Std library
+//
+use std::path::Path;
 
 // Our crates
 //
@@ -47,7 +66,7 @@ use version::version;
 
 // External crates
 //
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use clap::Parser;
 
 /// Main entry point
@@ -67,15 +86,23 @@ fn main() -> Result<()> {
     //
     if opts.files.is_empty() {
         // Assume stdin
-        match opts.itype {
-            None => panic!("-t MUST be provided"),
+        ftype = match opts.itype {
             Some(it) => match valid_input(&it) {
-                Ok(it) => ftype = it,
-                _ => panic!("Invalid type for -t"),
+                Ok(it) => it,
+                _ => return Err(anyhow!("Invalid type for -t")),
             },
+            None => return Err(anyhow!("-t MUST be provided")),
         }
     } else {
         println!("{:?}", opts.files);
+
+        for f in opts.files.iter() {
+            let p = Path::new(f);
+            match p.exists() {
+                true => println!("file: {:?}", p),
+                false => return Err(anyhow!("Unknown file {:?}", p)),
+            }
+        }
     }
 
     Ok(())

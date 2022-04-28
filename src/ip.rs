@@ -6,15 +6,15 @@
 //!
 //! Example:
 //! ```
-//! use dmarc_rs::ip::IP;
+//! use dmarc_rs::ip::Ip;
 //!
-//! let me = IP::new("127.0.0.1");
+//! let me = Ip::new("127.0.0.1");
 //! ```
 //! or
 //! ```
-//! use dmarc_rs::ip::IP;
+//! use dmarc_rs::ip::Ip;
 //!
-//! let me = IP::from(("::1", "localhost"));
+//! let me = Ip::from(("::1", "localhost"));
 //! ```
 //!
 //! The `solve()`  method does the A/AAAA to PTR conversion with a twist: if the IP can't be
@@ -31,7 +31,7 @@ use dns_lookup::lookup_addr;
 
 /// Individual IP/name tuple
 #[derive(Clone, Debug, PartialEq)]
-pub struct IP {
+pub struct Ip {
     /// IP, can be IPv4 or IPv6
     pub ip: IpAddr,
     /// hostname.
@@ -39,21 +39,21 @@ pub struct IP {
 }
 
 /// Implement a few helpers functions for IP
-impl IP {
+impl Ip {
     /// Create a new tuple with empty name.
     ///
     /// `new()` will panic with an invalid IPv{4,6} address
     ///
     /// Example:
     /// ```rust
-    /// # use dmarc_rs::ip::IP;
+    /// # use dmarc_rs::ip::Ip;
     ///
-    /// let ip = IP::new("1.1.1.1")
+    /// let ip = Ip::new("1.1.1.1")
     /// # ;
     /// ```
     ///
     pub fn new(s: &str) -> Self {
-        IP {
+        Ip {
             ip: s.parse::<IpAddr>().unwrap(),
             name: "".into(),
         }
@@ -63,9 +63,9 @@ impl IP {
     ///
     /// Examples:
     /// ```rust,no_run
-    /// # use dmarc_rs::ip::IP;
+    /// # use dmarc_rs::ip::Ip;
     ///
-    /// let ptr = IP::new("1.1.1.1").solve();
+    /// let ptr = Ip::new("1.1.1.1").solve();
     /// assert_eq!("one.one.one.one", ptr.name)
     /// # ;
     /// ```
@@ -74,9 +74,9 @@ impl IP {
     ///
     /// Example:
     /// ```rust,no_run
-    /// # use dmarc_rs::ip::IP;
+    /// # use dmarc_rs::ip::Ip;
     ///
-    /// let ptr = IP::new("192.0.2.1").solve();
+    /// let ptr = Ip::new("192.0.2.1").solve();
     /// assert_eq!("some.host.invalid", ptr.name)
     /// # ;
     /// ```
@@ -94,7 +94,13 @@ impl IP {
             }
             Err(e) => e.to_string(),
         };
-        IP { ip, name }
+        Ip { ip, name }
+    }
+}
+
+impl From<&str> for Ip {
+    fn from(s: &str) -> Self {
+        Ip::new(s)
     }
 }
 
@@ -103,17 +109,17 @@ impl IP {
 /// Example:
 /// ```
 /// # use std::net::IpAddr;
-/// use dmarc_rs::ip::IP;
+/// use dmarc_rs::ip::Ip;
 ///
-/// let t = IP::from(("1.1.1.1", "one.one.one.one"));
+/// let t = Ip::from(("1.1.1.1", "one.one.one.one"));
 ///
 /// assert_eq!("1.1.1.1".parse::<IpAddr>().unwrap(), t.ip);
 /// assert_eq!("one.one.one.one", &t.name);
 /// ```
 ///
-impl<'a> From<(&'a str, &'a str)> for IP {
-    fn from((ip, name): (&'a str, &'a str)) -> Self {
-        IP {
+impl From<(&str, &str)> for Ip {
+    fn from((ip, name): (&str, &str)) -> Self {
+        Ip {
             ip: ip.parse::<IpAddr>().unwrap(),
             name: name.into(),
         }
@@ -137,7 +143,7 @@ mod tests {
     #[case("::face:b00c")]
     #[case("3ffe::a:b:c:d:e")]
     fn test_ip_new_ok(#[case] s: &str) {
-        let a1 = IP::new(s);
+        let a1 = Ip::new(s);
         assert!(a1.name.is_empty());
         assert_eq!(s.parse::<IpAddr>().unwrap(), a1.ip)
     }
@@ -151,7 +157,7 @@ mod tests {
     #[case("::blah:blah::.168.1.1")]
     #[should_panic]
     fn test_ip_new_nok(#[case] s: &str) {
-        let _a1 = IP::new(s);
+        let _a1 = Ip::new(s);
     }
 
     #[rstest]
@@ -159,19 +165,19 @@ mod tests {
     #[case("2606:4700:4700::1111", "one.one.one.one")]
     #[case("192.0.2.1", "some.host.invalid")]
     fn test_ip_solve(#[case] s: &str, #[case] p: &str) {
-        let ptr = IP::new(s).solve();
+        let ptr = Ip::new(s).solve();
         assert_eq!(s.parse::<IpAddr>().unwrap(), ptr.ip);
         assert_eq!(p.to_string(), ptr.name);
     }
 
     #[test]
     fn test_new_from_tuple() {
-        let exp = IP {
+        let exp = Ip {
             ip: "1.1.1.1".parse::<IpAddr>().unwrap(),
             name: "one.one.one.one".into(),
         };
 
-        let t = IP::from(("1.1.1.1", "one.one.one.one"));
+        let t = Ip::from(("1.1.1.1", "one.one.one.one"));
 
         assert_eq!(exp, t);
     }
