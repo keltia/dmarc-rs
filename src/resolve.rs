@@ -94,10 +94,7 @@ impl IpList {
     /// ```no_run
     /// # use dmarc_rs::ip::Ip;
     /// # use dmarc_rs::resolve::IpList;
-    /// let mut l = IpList::new();
-    /// l.push(Ip::new( "1.1.1.1"));
-    /// l.push(Ip::new( "2606:4700:4700::1111"));
-    /// l.push(Ip::new( "192.0.2.1"));
+    /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
     ///
     /// let ptr = l.parallel_solve(4);
     /// ```
@@ -139,10 +136,7 @@ impl IpList {
     /// ```
     /// # use dmarc_rs::resolve::{IpList};
     /// # use dmarc_rs::ip::Ip;
-    /// let mut l = IpList::new();
-    /// l.push(Ip::new( "1.1.1.1"));
-    /// l.push(Ip::new( "2606:4700:4700::1111"));
-    /// l.push(Ip::new( "192.0.2.1"));
+    /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
     ///
     /// let ptr = l.simple_solve();
     /// ```
