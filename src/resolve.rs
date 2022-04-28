@@ -55,6 +55,7 @@ use threadpool::ThreadPool;
 ///
 #[derive(Debug)]
 pub struct IpList {
+    /// A growable list of `Ip`.
     pub list: Vec<Ip>,
 }
 
