@@ -181,4 +181,11 @@ mod tests {
 
         assert_eq!(exp, t);
     }
+
+    #[test]
+    fn test_partial_eq() {
+        let r = Ip{ip: "127.0.0.1".parse::<IpAddr>().unwrap(), name: "".into()};
+
+        assert_eq!(r, Ip::new("127.0.0.1"));
+    }
 }
