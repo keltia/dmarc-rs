@@ -417,9 +417,9 @@ mod tests {
         let ptr = l.simple_solve();
 
         assert_eq!(l.len(), ptr.len());
-        assert_eq!(ptr.list[0].name.to_string(), "one.one.one.one");
-        assert_eq!(ptr.list[1].name.to_string(), "one.one.one.one");
-        assert_eq!(ptr.list[2].name.to_string(), "some.host.invalid");
+        assert_eq!("one.one.one.one", ptr[0].name.to_string());
+        assert_eq!("one.one.one.one", ptr[1].name.to_string());
+        assert_eq!("some.host.invalid", ptr[2].name.to_string());
     }
 
     #[test]
@@ -428,9 +428,10 @@ mod tests {
 
         let ptr = l.parallel_solve(num_cpus::get_physical());
 
-        assert_eq!(ptr.list[0].name.to_string(), "one.one.one.one");
-        assert_eq!(ptr.list[1].name.to_string(), "one.one.one.one");
-        assert_eq!(ptr.list[2].name.to_string(), "some.host.invalid");
+        assert_eq!(l.len(), ptr.len());
+        assert_eq!("one.one.one.one", ptr[0].name.to_string());
+        assert_eq!("one.one.one.one", ptr[1].name.to_string());
+        assert_eq!("some.host.invalid", ptr[2].name.to_string());
     }
 
     #[test]
