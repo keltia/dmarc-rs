@@ -429,9 +429,15 @@ mod tests {
         let ptr = l.parallel_solve(num_cpus::get_physical());
 
         assert_eq!(l.len(), ptr.len());
-        assert_eq!("one.one.one.one", ptr[0].name.to_string());
-        assert_eq!("one.one.one.one", ptr[1].name.to_string());
-        assert_eq!("some.host.invalid", ptr[2].name.to_string());
+        // Order is not always preserved so check inside
+        //
+        for x in ptr {
+            if x.ip.to_string() == "192.0.2.1" {
+                assert_eq!("some.host.invalid", x.name);
+            } else {
+                assert_eq!("one.one.one.one", x.name);
+            }
+        }
     }
 
     #[test]
