@@ -34,6 +34,8 @@
 //! let ptr = l.parallel_solve(njobs);
 //! ```
 //!
+//! BUGS: this version only handle one name per IP (whatever is returned by `lookup_addr()`.
+//!
 
 // Our crates
 //
