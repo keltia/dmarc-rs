@@ -98,12 +98,6 @@ impl Ip {
     }
 }
 
-impl From<&str> for Ip {
-    fn from(s: &str) -> Self {
-        Ip::new(s)
-    }
-}
-
 /// Create a new IP from a tuple with all fields
 ///
 /// Example:
