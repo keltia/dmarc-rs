@@ -245,6 +245,14 @@ impl<const N: usize> From<[&str;N]> for IpList {
 
 /// Actual implementation of `IpList::from_iter` for an array of `&str`
 ///
+/// Example:
+/// ```
+/// use dmarc_rs::ip::Ip;
+/// use dmarc_rs::resolve::IpList;
+///
+/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+/// ```
+///
 impl<'a> FromIterator<&'a str> for IpList
 {
     fn from_iter<T: IntoIterator<Item=&'a str>>(iter: T) -> Self {
@@ -258,6 +266,17 @@ impl<'a> FromIterator<&'a str> for IpList
 }
 
 /// Actual implementation of `IpList::from_iter` for an array of `(&str,&str)` tuples
+///
+/// Example:
+/// ```
+/// use dmarc_rs::resolve::IpList;
+///
+/// let l = IpList::from([
+///     ("1.1.1.1", "one.one.one.one"),
+///     ("2606:4700:4700::1111", "one.one.one.one"),
+///     ("192.0.2.1", "some.host.invalid")
+/// ]);
+/// ```
 ///
 impl<'a> FromIterator<(&'a str,&'a str)> for IpList
 {
@@ -379,4 +398,36 @@ mod tests {
         assert_eq!(ptr.list[2].name.to_string(), "some.host.invalid");
     }
 
+    #[test]
+    fn test_from_array_str() {
+        let l = IpList{list: vec![Ip::new("1.1.1.1"), Ip::new("2606:4700:4700::1111"), Ip::new("192.0.2.1")]};
+        let l2 = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+
+        assert_eq!(l, l2);
+    }
+
+    #[test]
+    fn test_from_array_tuples() {
+         use std::net::IpAddr;
+
+         let l = IpList{list: vec![
+             Ip{ip: "1.1.1.1".parse::<IpAddr>().unwrap(), name: "one.one.one.one".into()},
+             Ip{ip: "2606:4700:4700::1111".parse::<IpAddr>().unwrap(), name: "one.one.one.one".into()},
+             Ip{ip: "192.0.2.1".parse::<IpAddr>().unwrap(), name: "some.host.invalid".into()},
+         ]};
+         let l2 = IpList::from([("1.1.1.1", "one.one.one.one"),
+             ("2606:4700:4700::1111", "one.one.one.one"),
+             ("192.0.2.1", "some.host.invalid")
+         ]);
+
+         assert_eq!(l, l2);
+    }
+
+    #[test]
+    fn test_partial_eq() {
+        let a = IpList::from([("1.1.1.1", "one.one.one.one")]);
+        let b = IpList::from([("1.1.1.1", "one.one.one.one")]);
+
+        assert_eq!(a, b);
+    }
 }
