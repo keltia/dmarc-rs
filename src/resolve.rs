@@ -44,6 +44,7 @@ use crate::ip::Ip;
 // Std library
 //
 use std::error::Error;
+use std::ops::{Index, IndexMut};
 use std::thread;
 use std::sync::mpsc::{channel, Receiver};
 
@@ -288,6 +289,41 @@ impl<'a> FromIterator<(&'a str,&'a str)> for IpList
     }
 }
 
+/// Implement Index on IpList for assessing list.
+///
+/// Example:
+/// ```
+/// # use dmarc_rs::resolve::IpList;
+/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+///
+/// println!("{:?}", l[0]);
+/// ```
+///
+impl Index<usize> for IpList {
+    type Output = Ip;
+
+    fn index(&self, index: usize) -> &Self::Output {
+        &self.list[index]
+    }
+}
+
+/// Implement IndexMut on IpList for assessing list as mutable objects.
+///
+/// Example:
+/// ```
+/// # use dmarc_rs::ip::Ip;
+/// use dmarc_rs::resolve::IpList;
+/// let mut l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+/// l[0] = Ip::new("9.9.9.9");
+/// println!("{:?}", l[0]);
+/// ```
+///
+impl IndexMut<usize> for IpList {
+    fn index_mut(&mut self, index: usize) -> &mut Self::Output {
+        &mut self.list[index]
+    }
+}
+
 // --- Private functions
 
 /// Start enough workers to resolve IP into PTR.
@@ -324,6 +360,7 @@ fn fan_in(rx_out: Receiver<Ip>) -> Result<Receiver<Ip>, Box<dyn Error>> {
 mod tests {
     use super::*;
     use crate::ip::Ip;
+    use std::net::IpAddr;
 
     #[test]
     fn test_push() {
@@ -427,5 +464,18 @@ mod tests {
         let b = IpList::from([("1.1.1.1", "one.one.one.one")]);
 
         assert_eq!(a, b);
+    }
+
+    #[test]
+    fn test_index() {
+        let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+        assert_eq!(Ip::new("1.1.1.1").ip, l[0].ip);
+    }
+
+    #[test]
+    fn test_index_mut() {
+        let mut l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+        l[0] = Ip::new("9.9.9.9");
+        assert_eq!("9.9.9.9".parse::<IpAddr>().unwrap(), l[0].ip);
     }
 }
