@@ -53,7 +53,7 @@ use threadpool::ThreadPool;
 ///
 /// This is now a distinct type instead of an alias, it is easier to add stuff into it.
 ///
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct IpList {
     /// A growable list of `Ip`.
     pub list: Vec<Ip>,
