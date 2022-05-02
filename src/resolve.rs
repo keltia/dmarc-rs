@@ -7,9 +7,9 @@
 //!
 //! Examples:
 //! ```rust
-//! use dmarc_rs::resolve::IpList;
-//!
+//! # use dmarc_rs::resolve::IpList;
 //! let l = IpList::new();
+//!
 //! // populate here the list of IP tuples
 //!
 //! // Use the simple solver
@@ -18,7 +18,7 @@
 //! ```
 //! and with the parallel solver:
 //! ```rust
-//! use dmarc_rs::resolve::IpList;
+//! # use dmarc_rs::resolve::IpList;
 //! use num_cpus::get_physical;
 //!
 //! // Get the number of physical cores, I prefer to use this one instead of the potentially
@@ -26,11 +26,12 @@
 //! let njobs = get_physical();
 //!
 //! let l = IpList::new();
+//!
 //! // populate here the list of IP tuples
 //! // ...
+//!
 //! // Use the parallel solver
 //! let ptr = l.parallel_solve(njobs);
-//! dbg!(&ptr);
 //! ```
 //!
 
@@ -184,8 +185,7 @@ impl IpList {
     ///
     /// Example:
     /// ```
-    /// use dmarc_rs::resolve::IpList;
-    ///
+    /// # use dmarc_rs::resolve::IpList;
     /// let ipl = IpList::from(["1.0.0.1", "1.1.1.1"]);
     ///
     /// assert!(!ipl.is_empty());
@@ -213,8 +213,7 @@ impl Iterator for IpList {
 ///
 /// Example:
 /// ```
-/// use dmarc_rs::resolve::IpList;
-///
+/// # use dmarc_rs::resolve::IpList;
 /// let l = IpList::from([("1.1.1.1", "one.one.one.one"), ("2606:4700:4700::1111", "one.one.one.one")]);
 ///
 /// assert_eq!(2, l.len());
@@ -230,8 +229,7 @@ impl<const N: usize> From<[(&str,&str);N]> for IpList {
 ///
 /// Example:
 /// ```
-/// use dmarc_rs::resolve::IpList;
-///
+/// # use dmarc_rs::resolve::IpList;
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// assert_eq!(3, l.len());
@@ -247,9 +245,8 @@ impl<const N: usize> From<[&str;N]> for IpList {
 ///
 /// Example:
 /// ```
-/// use dmarc_rs::ip::Ip;
-/// use dmarc_rs::resolve::IpList;
-///
+/// # use dmarc_rs::ip::Ip;
+/// # use dmarc_rs::resolve::IpList;
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 /// ```
 ///
@@ -269,8 +266,7 @@ impl<'a> FromIterator<&'a str> for IpList
 ///
 /// Example:
 /// ```
-/// use dmarc_rs::resolve::IpList;
-///
+/// # use dmarc_rs::resolve::IpList;
 /// let l = IpList::from([
 ///     ("1.1.1.1", "one.one.one.one"),
 ///     ("2606:4700:4700::1111", "one.one.one.one"),

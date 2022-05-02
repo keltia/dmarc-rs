@@ -47,9 +47,7 @@ impl Ip {
     /// Example:
     /// ```rust
     /// # use dmarc_rs::ip::Ip;
-    ///
-    /// let ip = Ip::new("1.1.1.1")
-    /// # ;
+    /// let ip = Ip::new("1.1.1.1");
     /// ```
     ///
     pub fn new(s: &str) -> Self {
@@ -64,7 +62,6 @@ impl Ip {
     /// Examples:
     /// ```rust,no_run
     /// # use dmarc_rs::ip::Ip;
-    ///
     /// let ptr = Ip::new("1.1.1.1").solve();
     /// assert_eq!("one.one.one.one", ptr.name)
     /// # ;
@@ -75,7 +72,6 @@ impl Ip {
     /// Example:
     /// ```rust,no_run
     /// # use dmarc_rs::ip::Ip;
-    ///
     /// let ptr = Ip::new("192.0.2.1").solve();
     /// assert_eq!("some.host.invalid", ptr.name)
     /// # ;
@@ -102,13 +98,8 @@ impl Ip {
 ///
 /// Example:
 /// ```
-/// # use std::net::IpAddr;
-/// use dmarc_rs::ip::Ip;
-///
+/// # use dmarc_rs::ip::Ip;
 /// let t = Ip::from(("1.1.1.1", "one.one.one.one"));
-///
-/// assert_eq!("1.1.1.1".parse::<IpAddr>().unwrap(), t.ip);
-/// assert_eq!("one.one.one.one", &t.name);
 /// ```
 ///
 impl From<(&str, &str)> for Ip {
