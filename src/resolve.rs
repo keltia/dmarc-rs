@@ -203,19 +203,6 @@ impl IpList {
     }
 }
 
-/// We want to iterate on IPList as if were on IPList.list itself.
-///
-impl Iterator for IpList {
-    type Item = Ip;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        match self.list.iter().next() {
-            Some(ip) => Some(ip.clone()),
-            None => None,
-        }
-    }
-}*/
-
 impl IntoIterator for IpList {
     type Item = Ip;
     type IntoIter = std::vec::IntoIter<Self::Item>;
