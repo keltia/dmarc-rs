@@ -45,8 +45,8 @@ use crate::ip::Ip;
 //
 use std::error::Error;
 use std::ops::{Index, IndexMut};
-use std::thread;
 use std::sync::mpsc::{channel, Receiver};
+use std::thread;
 
 // External crates
 //
@@ -85,9 +85,7 @@ impl IpList {
     ///
     #[inline]
     pub fn new() -> Self {
-        IpList {
-            list: vec!(),
-        }
+        IpList { list: vec![] }
     }
 
     /// Convert a list of IP into names with multiple threads
@@ -224,7 +222,7 @@ impl IntoIterator for IpList {
 /// assert_eq!(2, l.len());
 /// ```
 ///
-impl<const N: usize> From<[(&str,&str);N]> for IpList {
+impl<const N: usize> From<[(&str, &str); N]> for IpList {
     fn from(arr: [(&str, &str); N]) -> Self {
         Self::from_iter(arr)
     }
@@ -240,7 +238,7 @@ impl<const N: usize> From<[(&str,&str);N]> for IpList {
 /// assert_eq!(3, l.len());
 /// ```
 ///
-impl<const N: usize> From<[&str;N]> for IpList {
+impl<const N: usize> From<[&str; N]> for IpList {
     fn from(arr: [&str; N]) -> Self {
         Self::from_iter(arr)
     }
@@ -255,9 +253,8 @@ impl<const N: usize> From<[&str;N]> for IpList {
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 /// ```
 ///
-impl<'a> FromIterator<&'a str> for IpList
-{
-    fn from_iter<T: IntoIterator<Item=&'a str>>(iter: T) -> Self {
+impl<'a> FromIterator<&'a str> for IpList {
+    fn from_iter<T: IntoIterator<Item = &'a str>>(iter: T) -> Self {
         let mut ipl = IpList::new();
 
         for ip in iter {
@@ -279,9 +276,8 @@ impl<'a> FromIterator<&'a str> for IpList
 /// ]);
 /// ```
 ///
-impl<'a> FromIterator<(&'a str,&'a str)> for IpList
-{
-    fn from_iter<T: IntoIterator<Item=(&'a str, &'a str)>>(iter: T) -> Self {
+impl<'a> FromIterator<(&'a str, &'a str)> for IpList {
+    fn from_iter<T: IntoIterator<Item = (&'a str, &'a str)>>(iter: T) -> Self {
         let mut ipl = IpList::new();
 
         for (ip, name) in iter {
@@ -330,7 +326,11 @@ impl IndexMut<usize> for IpList {
 
 /// Start enough workers to resolve IP into PTR.
 ///
-fn fan_out(rx_gen: Receiver<Ip>, pool: ThreadPool, njobs: usize) -> Result<Receiver<Ip>, Box<dyn Error>> {
+fn fan_out(
+    rx_gen: Receiver<Ip>,
+    pool: ThreadPool,
+    njobs: usize,
+) -> Result<Receiver<Ip>, Box<dyn Error>> {
     let (tx, rx) = channel();
 
     for _ in 0..njobs {
@@ -338,8 +338,7 @@ fn fan_out(rx_gen: Receiver<Ip>, pool: ThreadPool, njobs: usize) -> Result<Recei
         let n = rx_gen.recv().unwrap();
         pool.execute(move || {
             let r = n.solve();
-            tx.send(r)
-                .expect("waiting channel");
+            tx.send(r).expect("waiting channel");
         });
     }
     Ok(rx)
@@ -351,8 +350,7 @@ fn fan_in(rx_out: Receiver<Ip>) -> Result<Receiver<Ip>, Box<dyn Error>> {
     let (tx, rx) = channel();
     thread::spawn(move || {
         for ip in rx_out.iter() {
-            tx.send(ip)
-                .expect("can not send");
+            tx.send(ip).expect("can not send");
         }
     });
     Ok(rx)
@@ -394,7 +392,6 @@ mod tests {
         ipl.push(Ip::new("1.0.0.1"));
         assert_eq!(false, ipl.is_empty());
     }
-
 
     #[test]
     fn test_parallel_solve_empty() {
@@ -444,7 +441,13 @@ mod tests {
 
     #[test]
     fn test_from_array_str() {
-        let l = IpList{list: vec![Ip::new("1.1.1.1"), Ip::new("2606:4700:4700::1111"), Ip::new("192.0.2.1")]};
+        let l = IpList {
+            list: vec![
+                Ip::new("1.1.1.1"),
+                Ip::new("2606:4700:4700::1111"),
+                Ip::new("192.0.2.1"),
+            ],
+        };
         let l2 = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 
         assert_eq!(l, l2);
@@ -452,19 +455,31 @@ mod tests {
 
     #[test]
     fn test_from_array_tuples() {
-         use std::net::IpAddr;
+        use std::net::IpAddr;
 
-         let l = IpList{list: vec![
-             Ip{ip: "1.1.1.1".parse::<IpAddr>().unwrap(), name: "one.one.one.one".into()},
-             Ip{ip: "2606:4700:4700::1111".parse::<IpAddr>().unwrap(), name: "one.one.one.one".into()},
-             Ip{ip: "192.0.2.1".parse::<IpAddr>().unwrap(), name: "some.host.invalid".into()},
-         ]};
-         let l2 = IpList::from([("1.1.1.1", "one.one.one.one"),
-             ("2606:4700:4700::1111", "one.one.one.one"),
-             ("192.0.2.1", "some.host.invalid")
-         ]);
+        let l = IpList {
+            list: vec![
+                Ip {
+                    ip: "1.1.1.1".parse::<IpAddr>().unwrap(),
+                    name: "one.one.one.one".into(),
+                },
+                Ip {
+                    ip: "2606:4700:4700::1111".parse::<IpAddr>().unwrap(),
+                    name: "one.one.one.one".into(),
+                },
+                Ip {
+                    ip: "192.0.2.1".parse::<IpAddr>().unwrap(),
+                    name: "some.host.invalid".into(),
+                },
+            ],
+        };
+        let l2 = IpList::from([
+            ("1.1.1.1", "one.one.one.one"),
+            ("2606:4700:4700::1111", "one.one.one.one"),
+            ("192.0.2.1", "some.host.invalid"),
+        ]);
 
-         assert_eq!(l, l2);
+        assert_eq!(l, l2);
     }
 
     #[test]

@@ -49,7 +49,7 @@ pub fn valid_input(itype: &str) -> Result<Input> {
         "gz" => Ok(Input::Gzip),
         "zip" => Ok(Input::Zip),
         _ => Err(anyhow!("Invalid type")),
-    }
+    };
 }
 
 #[cfg(test)]

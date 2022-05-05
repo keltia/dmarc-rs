@@ -91,7 +91,7 @@ pub enum PolicyOverride {
     trusted_forwarder,
     mailing_list,
     local_policy,
-    other
+    other,
 }
 
 /// How do we allow report generators to include new classes of override reasons if they
@@ -99,7 +99,7 @@ pub enum PolicyOverride {
 #[derive(Debug, Deserialize)]
 pub struct PolicyOverrideReason {
     /// Type of override
-    #[serde(rename="type")]
+    #[serde(rename = "type")]
     pub ptype: PolicyOverride,
     /// Textual reason
     pub comment: Option<String>,
@@ -169,7 +169,7 @@ pub struct DKIMAuthResult {
 /// SPF domain scope.
 #[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize)]
-pub enum  SPFDomainScope {
+pub enum SPFDomainScope {
     helo,
     mfrom,
 }
@@ -177,7 +177,7 @@ pub enum  SPFDomainScope {
 /// The SPF result.
 #[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize)]
-pub enum  SPFResult {
+pub enum SPFResult {
     none,
     neutral,
     pass,
@@ -260,7 +260,10 @@ mod tests {
 
         // Validate some fields
         assert_eq!("google.com", &item[0].report_metadata.org_name);
-        assert_eq!("noreply-dmarc-support@google.com", &item[0].report_metadata.email);
+        assert_eq!(
+            "noreply-dmarc-support@google.com",
+            &item[0].report_metadata.email
+        );
         assert_eq!(2, (&item[0].record).len())
     }
 }
