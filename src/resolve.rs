@@ -83,6 +83,7 @@ impl IpList {
     /// assert!(l.is_empty());
     /// ```
     ///
+    #[inline]
     pub fn new() -> Self {
         IpList {
             list: vec!(),
@@ -165,6 +166,7 @@ impl IpList {
     /// l.push(Ip::new("1.1.1.1"));
     /// ```
     ///
+    #[inline]
     pub fn push(&mut self, ip: Ip) {
         self.list.push(ip);
     }
@@ -180,6 +182,7 @@ impl IpList {
     /// println!("length of l is {}", l.len())
     /// ```
     ///
+    #[inline]
     pub fn len(&self) -> usize {
         self.list.len()
     }
@@ -194,6 +197,7 @@ impl IpList {
     /// assert!(!ipl.is_empty());
     /// ```
     ///
+    #[inline]
     pub fn is_empty(&self) -> bool {
         self.list.is_empty()
     }
