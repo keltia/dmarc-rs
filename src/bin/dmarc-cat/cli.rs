@@ -1,6 +1,9 @@
 //! Actual command-line parsing module
 
+// Std library
+//
 use std::path::PathBuf;
+
 // External crates
 //
 use clap::{crate_authors, crate_description, crate_version, AppSettings, Parser};
