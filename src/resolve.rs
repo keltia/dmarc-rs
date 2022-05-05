@@ -214,6 +214,17 @@ impl Iterator for IpList {
             None => None,
         }
     }
+}*/
+
+impl IntoIterator for IpList {
+    type Item = Ip;
+    type IntoIter = std::vec::IntoIter<Self::Item>;
+
+    /// Iterate over the list of Ip, consuming the list
+    #[inline]
+    fn into_iter(self) -> Self::IntoIter {
+        self.list.into_iter()
+    }
 }
 
 /// Create an `IpList` from an iterator of `&str`.
@@ -488,5 +499,26 @@ mod tests {
         let mut l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
         l[0] = Ip::new("9.9.9.9");
         assert_eq!("9.9.9.9".parse::<IpAddr>().unwrap(), l[0].ip);
+    }
+
+    #[test]
+    fn test_iplist_for() {
+        let l = IpList::from([
+            ("1.1.1.1", "one.one.one.one"),
+            ("2606:4700:4700::1111", "one.one.one.one"),
+            ("192.0.2.1", "some.host.invalid"),
+        ]);
+        assert_eq!(3, l.len());
+
+        let r = vec!["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"];
+        assert_eq!(3, r.len());
+
+        let mut ips = vec![];
+
+        for ip in l.into_iter() {
+            ips.push(ip.ip.to_string());
+        }
+        assert_eq!(r, ips);
+        dbg!(&ips);
     }
 }
