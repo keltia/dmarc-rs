@@ -38,7 +38,6 @@ pub struct Ip {
     pub name: String,
 }
 
-/// Implement a few helpers functions for IP
 impl Ip {
     /// Create a new tuple with empty name.
     ///

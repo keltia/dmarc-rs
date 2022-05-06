@@ -70,8 +70,6 @@ impl Default for IpList {
     }
 }
 
-/// Methods for IPList
-///
 impl IpList {
     /// Basic new()
     ///
