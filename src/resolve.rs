@@ -50,3 +50,13 @@ pub fn resolve(ipl: &IpList, njobs: usize) -> Result<IpList> {
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_invalid_jobs() {
+        let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+        assert!(resolve(&l, 1000).is_err())
+    }
+}
