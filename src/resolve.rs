@@ -9,6 +9,7 @@
 // Our crates
 //
 use crate::ip::Ip;
+use crate::iplist::IpList;
 
 // Std library
 //
@@ -18,8 +19,29 @@ use std::thread;
 
 // External crates
 //
-use anyhow::Result;
+use anyhow::{anyhow, Result};
 use threadpool::ThreadPool;
+
+/// `resolve()` is the main function call to get all names from the list of `Ip` we get from the
+/// XML file.
+///
+///
+pub fn resolve(ipl: &IpList, njobs: usize) -> Result<IpList> {
+    let max_threads = num_cpus::get();
+
+    // Put a hard limit on how many parallel thread to the max number of cores (incl. Hyperthreading).
+    //
+    if njobs > max_threads {
+        return Err(anyhow!("Too many threads"))
+    }
+
+    // Call the appropriate one
+    //
+    match njobs {
+        1 => Ok(ipl.simple_solve()),
+        _ => Ok(ipl.parallel_solve(njobs)),
+    }
+}
 
 /// Start enough workers to resolve IP into PTR.
 ///
