@@ -1,8 +1,14 @@
 //! Module handling the DNS resolving operations
 //!
-//! We use `IpList` as container and `resolv()` is the main function to get all names.
+//! We use `IpList` as container and `resolv()` is the main function to get all names.  As we have
+//! the choice between two solvers, you can select the simple single-threaded one by specifying
+//! that you want only 1 job.
 //!
-//! /// Example:
+//! When the crate is compiled, the number of CPU & CPU threads is read and that gives us the upper
+//! bound for the parallelism.  The `dmarc-cat` binary will default to number physical cores but the hard
+//! limit is the number of total core threads (which is higher if the CPU supports Hyperthreading).
+//!
+//! Example:
 //! ```
 //! # use dmarc_rs::resolve::resolve;
 //! # use dmarc_rs::iplist::IpList;
@@ -14,7 +20,7 @@
 //! // Use the parallel solver with 4 threads.
 //! let ptr2 = resolve(&l, 4).unwrap();
 //! ```
-
+//!
 //! BUGS: this version only handle one name per IP (whatever is returned by `lookup_addr()`.
 //!
 
@@ -31,7 +37,6 @@ use anyhow::{anyhow, Result};
 
 /// `resolve()` is the main function call to get all names from the list of `Ip` we get from the
 /// XML file.
-///
 ///
 pub fn resolve(ipl: &IpList, njobs: usize) -> Result<IpList> {
     let max_threads = num_cpus::get();
