@@ -64,4 +64,17 @@ mod tests {
         let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
         assert!(resolve(&l, 1000).is_err())
     }
+
+    #[test]
+    fn test_resolve() {
+        let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+
+        // Using the simple single threaded solver.
+        let ptr = resolve(&l, 1).unwrap();
+
+        // Use the parallel solver with 4 threads.
+        let ptr2 = resolve(&l, 4).unwrap();
+
+        assert_eq!(ptr, ptr2);
+    }
 }
