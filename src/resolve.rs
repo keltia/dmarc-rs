@@ -20,19 +20,14 @@
 
 // Our crates
 //
-use crate::ip::Ip;
 use crate::iplist::IpList;
 
 // Std library
 //
-use std::error::Error;
-use std::sync::mpsc::{channel, Receiver};
-use std::thread;
 
 // External crates
 //
 use anyhow::{anyhow, Result};
-use threadpool::ThreadPool;
 
 /// `resolve()` is the main function call to get all names from the list of `Ip` we get from the
 /// XML file.
@@ -55,34 +50,3 @@ pub fn resolve(ipl: &IpList, njobs: usize) -> Result<IpList> {
     }
 }
 
-/// Start enough workers to resolve IP into PTR.
-///
-pub(crate) fn fan_out(
-    rx_gen: Receiver<Ip>,
-    pool: ThreadPool,
-    njobs: usize,
-) -> Result<Receiver<Ip>, Box<dyn Error>> {
-    let (tx, rx) = channel();
-
-    for _ in 0..njobs {
-        let tx = tx.clone();
-        let n = rx_gen.recv().unwrap();
-        pool.execute(move || {
-            let r = n.solve();
-            tx.send(r).expect("waiting channel");
-        });
-    }
-    Ok(rx)
-}
-
-/// Gather all results into an output channel
-///
-pub(crate) fn fan_in(rx_out: Receiver<Ip>) -> Result<Receiver<Ip>, Box<dyn Error>> {
-    let (tx, rx) = channel();
-    thread::spawn(move || {
-        for ip in rx_out.iter() {
-            tx.send(ip).expect("can not send");
-        }
-    });
-    Ok(rx)
-}
