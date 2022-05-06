@@ -1,8 +1,20 @@
 //! Module handling the DNS resolving operations
 //!
-//! We use `IpList` as container and define the internal functions called by `IpList::simple_solve()`
-//! and `IpList::parallel_solve()`  to return the same list with all names hopefully resolved.
+//! We use `IpList` as container and `resolv()` is the main function to get all names.
 //!
+//! /// Example:
+//! ```
+//! # use dmarc_rs::resolve::resolve;
+//! # use dmarc_rs::iplist::IpList;
+//! let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+//!
+//! // Using the simple single threaded solver.
+//! let ptr = resolve(&l, 1).unwrap();
+//!
+//! // Use the parallel solver with 4 threads.
+//! let ptr2 = resolve(&l, 4).unwrap();
+//! ```
+
 //! BUGS: this version only handle one name per IP (whatever is returned by `lookup_addr()`.
 //!
 
