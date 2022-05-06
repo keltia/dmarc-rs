@@ -51,7 +51,9 @@
 
 // Internal crates
 //
+pub mod analyze;
 pub mod cli;
+pub mod file;
 pub mod version;
 
 // Std library
@@ -60,6 +62,7 @@ pub mod version;
 // Our crates
 //
 use cli::Opts;
+use crate::file::{check_for_files, scan_list};
 use dmarc_rs::filetype::*;
 use version::version;
 
@@ -79,11 +82,12 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
+    let mut flist = opts.files.to_owned();
     let mut ftype = Input::Plain;
 
-    // If no arguments or argument == "-"
+    // If no arguments, we assume stdin and we enforece the presence of `-t`.
     //
-    if opts.files.is_empty() {
+    if flist.is_empty() {
         // Assume stdin
         ftype = match opts.itype {
             Some(it) => match valid_input(&it) {
@@ -91,17 +95,24 @@ fn main() -> Result<()> {
                 _ => return Err(anyhow!("Invalid type for -t")),
             },
             None => return Err(anyhow!("-t MUST be provided")),
-        }
-    } else {
-        println!("{:?}", opts.files);
-
-        for f in opts.files.iter() {
-            match f.exists() {
-                true => println!("file: {:?}", f),
-                false => return Err(anyhow!("Unknown file {:?}", f)),
-            }
-        }
+        };
+        flist.push("-".into())
     }
 
+    println!("{:?}", flist);
+
+    // Check each file in the list and returns only the valid ones
+    //
+    let flist = check_for_files(&flist);
+
+    // Do the thing.
+    //
+    let output = match scan_list(&flist) {
+        Ok(res) => res,
+        Err(e) => {
+            format!("Error: {:?}", e)
+        }
+    };
+    println!("{:?}", output);
     Ok(())
 }
