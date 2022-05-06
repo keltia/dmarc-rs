@@ -69,7 +69,7 @@ mod tests {
         assert!(valid_input(s).is_ok());
         let r = match r {
             Ok(r) => r,
-            Err(_) => panic!("nok"),
+            Err(_) => e.to_string(),
         };
         assert_eq!(it, r);
     }
