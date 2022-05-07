@@ -32,4 +32,3 @@ fn test_invalid_type_ok() {
     let mut cmd = Command::cargo_bin(BIN).unwrap();
     cmd.arg("-t").arg("txt").assert().success();
 }
-

@@ -49,7 +49,7 @@ pub fn valid_input(itype: &str) -> Result<Input> {
         "gz" => Ok(Input::Gzip),
         "zip" => Ok(Input::Zip),
         _ => Err(anyhow!("Invalid type")),
-    }
+    };
 }
 
 #[cfg(test)]
@@ -69,7 +69,7 @@ mod tests {
         assert!(valid_input(s).is_ok());
         let r = match r {
             Ok(r) => r,
-            Err(_) => panic!("nok"),
+            Err(_) => Input::Plain,
         };
         assert_eq!(it, r);
     }

@@ -4,6 +4,6 @@
 
 pub mod filetype;
 pub mod ip;
+pub mod iplist;
 pub mod resolve;
 pub mod types;
-
