@@ -59,7 +59,7 @@ use threadpool::ThreadPool;
 #[derive(Debug, Eq, PartialOrd, Ord, PartialEq)]
 pub struct IpList {
     /// A growable list of `Ip`.
-    pub list: Vec<Ip>,
+    list: Vec<Ip>,
 }
 
 /// Implement the Default Trait.
