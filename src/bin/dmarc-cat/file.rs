@@ -39,7 +39,7 @@ pub fn ext_to_ftype(p: &Path) -> Input {
 
 /// Check if every file in the list and only return the list of valid ones.
 ///
-pub fn check_for_files(lfn: &Vec<PathBuf>) -> Vec<PathBuf> {
+pub fn check_for_files(lfn: &[PathBuf]) -> Vec<PathBuf> {
     let mut res: Vec<PathBuf> = vec![];
 
     // Check for various files.
