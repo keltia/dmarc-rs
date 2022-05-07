@@ -30,7 +30,7 @@ use std::net::IpAddr;
 use dns_lookup::lookup_addr;
 
 /// Individual IP/name tuple
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, Eq, Ord, PartialOrd, PartialEq)]
 pub struct Ip {
     /// IP, can be IPv4 or IPv6
     pub ip: IpAddr,

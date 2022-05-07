@@ -56,7 +56,7 @@ use threadpool::ThreadPool;
 /// We define the usual set of methods to facilitate initialisation and handling of the inner
 /// list of `Ip` inside.
 ///
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Eq, PartialOrd, Ord, PartialEq)]
 pub struct IpList {
     /// A growable list of `Ip`.
     pub list: Vec<Ip>,
@@ -109,6 +109,7 @@ impl IpList {
         for ip in fan_in(rx_out).unwrap() {
             full.push(ip);
         }
+        full.list.sort();
         dbg!(&full);
         full
     }
@@ -148,6 +149,7 @@ impl IpList {
             let ip = ip.solve();
             r.push(ip.clone());
         }
+        r.list.sort();
         r
     }
 
@@ -427,8 +429,8 @@ mod tests {
 
         assert_eq!(l.len(), ptr.len());
         assert_eq!("one.one.one.one", ptr[0].name.to_string());
-        assert_eq!("one.one.one.one", ptr[1].name.to_string());
-        assert_eq!("some.host.invalid", ptr[2].name.to_string());
+        assert_eq!("some.host.invalid", ptr[1].name.to_string());
+        assert_eq!("one.one.one.one", ptr[2].name.to_string());
     }
 
     #[test]
