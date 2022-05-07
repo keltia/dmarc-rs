@@ -73,7 +73,7 @@ mod tests {
         let ptr = resolve(&l, 1).unwrap();
 
         // Use the parallel solver with 4 threads.
-        let ptr2 = resolve(&l, 4).unwrap();
+        let ptr2 = resolve(&l, num_cpus::get()).unwrap();
 
         assert_eq!(ptr, ptr2);
     }
