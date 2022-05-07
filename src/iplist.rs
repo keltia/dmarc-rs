@@ -48,19 +48,14 @@ use threadpool::ThreadPool;
 
 /// List of IP tuples.
 ///
-/// This is now a distinct type instead of an alias, it is easier to add stuff into it.
-///
-/// XXX Maybe a way to simplify would be to use `IpList(Vec<Ip>)` and `self.0` instead of the
-/// explicit `self.list`.
+/// This is a wrapper type instead of an alias, it is easier to add stuff into it.  The inner list
+/// is not accessible except through our methods.
 ///
 /// We define the usual set of methods to facilitate initialisation and handling of the inner
 /// list of `Ip` inside.
 ///
 #[derive(Debug, Eq, PartialOrd, Ord, PartialEq)]
-pub struct IpList {
-    /// A growable list of `Ip`.
-    list: Vec<Ip>,
-}
+pub struct IpList(Vec<Ip>);
 
 /// Implement the Default Trait.
 ///
@@ -82,7 +77,7 @@ impl IpList {
     ///
     #[inline]
     pub fn new() -> Self {
-        IpList { list: vec![] }
+        IpList(vec![])
     }
 
     /// Convert a list of IP into names with multiple threads
@@ -109,7 +104,7 @@ impl IpList {
         for ip in fan_in(rx_out).unwrap() {
             full.push(ip);
         }
-        full.list.sort();
+        full.0.sort();
         dbg!(&full);
         full
     }
@@ -120,7 +115,7 @@ impl IpList {
         let (tx, rx) = channel();
 
         // construct a copy of the list
-        let all: Vec<Ip> = self.list.clone();
+        let all: Vec<Ip> = self.0.clone();
 
         // use that copy to send over
         thread::spawn(move || {
@@ -145,11 +140,11 @@ impl IpList {
     pub fn simple_solve(&self) -> Self {
         let mut r = IpList::new();
 
-        for ip in self.list.iter() {
+        for ip in self.0.iter() {
             let ip = ip.solve();
             r.push(ip.clone());
         }
-        r.list.sort();
+        r.0.sort();
         r
     }
 
@@ -165,7 +160,7 @@ impl IpList {
     ///
     #[inline]
     pub fn push(&mut self, ip: Ip) {
-        self.list.push(ip);
+        self.0.push(ip);
     }
 
     /// Implement len() or IPList
@@ -181,7 +176,7 @@ impl IpList {
     ///
     #[inline]
     pub fn len(&self) -> usize {
-        self.list.len()
+        self.0.len()
     }
 
     /// Implement is_empty() as a complement to len()
@@ -196,7 +191,7 @@ impl IpList {
     ///
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.list.is_empty()
+        self.0.is_empty()
     }
 }
 
@@ -210,7 +205,7 @@ impl IntoIterator for IpList {
     ///
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        self.list.into_iter()
+        self.0.into_iter()
     }
 }
 
@@ -312,7 +307,7 @@ impl Index<usize> for IpList {
     ///
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
-        &self.list[index]
+        &self.0[index]
     }
 }
 
@@ -330,7 +325,7 @@ impl IndexMut<usize> for IpList {
     ///
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.list[index]
+        &mut self.0[index]
     }
 }
 
@@ -382,7 +377,7 @@ mod tests {
         l.push(Ip::new("1.0.0.1"));
 
         assert_eq!(2, l.len());
-        assert_eq!("9.9.9.9", l.list[0].ip.to_string());
+        assert_eq!("9.9.9.9", l.0[0].ip.to_string());
     }
 
     #[test]
@@ -410,7 +405,7 @@ mod tests {
         let a = IpList::new();
 
         let r = a.parallel_solve(num_cpus::get_physical());
-        assert!(r.list.is_empty())
+        assert!(r.0.is_empty())
     }
 
     #[test]
@@ -418,7 +413,7 @@ mod tests {
         let a = IpList::new();
         let r = a.simple_solve();
 
-        assert!(r.list.is_empty())
+        assert!(r.0.is_empty())
     }
 
     #[test]
@@ -453,13 +448,13 @@ mod tests {
 
     #[test]
     fn test_from_array_str() {
-        let l = IpList {
-            list: vec![
+        let l = IpList(
+            vec![
                 Ip::new("1.1.1.1"),
                 Ip::new("2606:4700:4700::1111"),
                 Ip::new("192.0.2.1"),
-            ],
-        };
+            ]);
+
         let l2 = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 
         assert_eq!(l, l2);
@@ -469,8 +464,8 @@ mod tests {
     fn test_from_array_tuples() {
         use std::net::IpAddr;
 
-        let l = IpList {
-            list: vec![
+        let l = IpList(
+            vec![
                 Ip {
                     ip: "1.1.1.1".parse::<IpAddr>().unwrap(),
                     name: "one.one.one.one".into(),
@@ -484,7 +479,7 @@ mod tests {
                     name: "some.host.invalid".into(),
                 },
             ],
-        };
+        );
         let l2 = IpList::from([
             ("1.1.1.1", "one.one.one.one"),
             ("2606:4700:4700::1111", "one.one.one.one"),
