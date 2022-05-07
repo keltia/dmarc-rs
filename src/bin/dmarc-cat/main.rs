@@ -104,6 +104,9 @@ fn main() -> Result<()> {
     // Check each file in the list and returns only the valid ones
     //
     let flist = check_for_files(&flist);
+    if flist.is_empty() {
+        return Err(anyhow!("No valid files"))
+    }
 
     // Do the thing.
     //
