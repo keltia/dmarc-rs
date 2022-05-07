@@ -22,7 +22,7 @@ use anyhow::{anyhow, Result};
 
 /// Allowed type of input
 ///
-#[derive(Debug, PartialEq)]
+#[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Input {
     /// plain text files aka utf-8 XML
     Plain,
