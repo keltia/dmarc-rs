@@ -16,6 +16,11 @@
 //! `valid_input()` returns one of the `Input` enum values or an error.
 //!
 
+// Std Library
+//
+use std::ffi::OsStr;
+use std::path::{Path, PathBuf};
+
 // External crates
 //
 use anyhow::{anyhow, Result};
@@ -52,10 +57,46 @@ pub fn valid_input(itype: &str) -> Result<Input> {
     };
 }
 
+/// Matches a filename to a given input type based on the extension.
+/// Assumes stdin/- is plain text unless specified elsewere
+///
+pub fn ext_to_ftype(p: &Path) -> Input {
+    let ext = match p.extension() {
+        Some(ext) => ext,
+        _ => OsStr::new("txt"),
+    }
+        .to_owned();
+    match ext.into_string().unwrap().to_lowercase().as_str() {
+        "zip" => Input::Zip,
+        "txt" => Input::Plain,
+        "xml" => Input::Plain,
+        "gz" => Input::Gzip,
+        _ => Input::Plain,
+    }
+}
+
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use rstest::rstest;
+
+    #[rstest]
+    #[case("foo.zip", Input::Zip)]
+    #[case("foo.ZIP", Input::Zip)]
+    #[case("foo.gz", Input::Gzip)]
+    #[case("foo.GZ", Input::Gzip)]
+    #[case("foo.Gz", Input::Gzip)]
+    #[case("foo.xml", Input::Plain)]
+    #[case("foo.XML", Input::Plain)]
+    #[case("foo.csv", Input::Plain)]
+    #[case("foo.CSV", Input::Plain)]
+    #[case(".CSV", Input::Plain)]
+    fn test_ext_to_ftype(#[case] f: PathBuf, #[case] t: Input) {
+        let p = PathBuf::from(f);
+        assert_eq!(t, ext_to_ftype(&p))
+    }
+
 
     #[rstest]
     #[case("plain", Input::Plain)]
