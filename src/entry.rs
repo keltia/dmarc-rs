@@ -6,11 +6,14 @@
 // Std library
 //
 use std::fs::File;
+use std::io::{BufReader, Read};
 use std::path::PathBuf;
 
 // Our crates
 //
 use crate::filetype::{ext_to_ftype, Input};
+
+use anyhow::{anyhow, Result};
 
 /// Entry carries the file path and its type (Plain, Gzip, etc.).
 ///
@@ -67,22 +70,22 @@ impl Entry {
         self
     }
 
-    /// Return a handle to the opened file.  This where the file type make all the differences
-    /// and allow to manage archives.
+    /// Open the given file and return the content as a String.
     ///
-    /// Example:
-    /// ```no_run
-    /// use dmarc_rs::entry::Entry;
+    /// NOTE: plain files are assumed to be XML.
     ///
-    /// let fh = match Entry::from("Foo.zip").open() {
-    ///     Ok(fh) => fh,
-    ///     Err(e) => panic!("Error: {}", e.to_string()),
-    /// };
-    /// ```
-    ///
-    pub fn open(&self) -> std::io::Result<File> {
+    pub fn get_xml(self) -> Result<String> {
         match self.ft {
-            Input::Plain => File::open(&self.p),
+            Input::Csv|Input::Xml|Input::Plain => {
+                let fh = match File::open(&self.p) {
+                    Ok(fh) => fh,
+                    Err(e) => return Err(anyhow!("{}", e.to_string())),
+                };
+                let mut lines = BufReader::new(fh);
+                let mut s = String::new();
+                let _cnt = lines.read_to_string(&mut s);
+                Ok(s)
+            },
             Input::Zip => unimplemented!(),
             Input::Gzip => unimplemented!(),
         }
@@ -128,5 +131,15 @@ mod tests {
     fn test_set() {
         let e = Entry::new(&PathBuf::from("foo")).set(Input::Gzip);
         assert_eq!(Input::Gzip, e.ft);
+    }
+
+    #[test]
+    fn test_entry_get_xml() {
+        let f = Entry::from("Cargo.toml");
+
+        let txt = f.get_xml();
+        assert!(txt.is_ok());
+        let txt = txt.unwrap();
+        assert!(txt.contains("dmarc-rs"))
     }
 }
