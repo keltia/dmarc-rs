@@ -2,6 +2,7 @@
 //! the resolving part of it).
 //!
 
+pub mod entry;
 pub mod filetype;
 pub mod ip;
 pub mod iplist;
