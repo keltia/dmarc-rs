@@ -19,7 +19,7 @@
 // Std Library
 //
 use std::ffi::OsStr;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 // External crates
 //
@@ -29,15 +29,27 @@ use anyhow::{anyhow, Result};
 ///
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub enum Input {
-    /// plain text files aka utf-8 XML
+    /// Plain CSV files
+    Csv,
+    /// plain text files
     Plain,
     /// XML compressed with gzip
     Gzip,
+    /// Actual XML files
+    Xml,
     /// ZIP files with generally both CSV and XML
     Zip,
 }
 
 /// Validate the input type.
+///
+/// Our currently supported file types:
+///
+/// - CSV
+/// - GZIP
+/// - Zip
+/// - XML
+/// - Plain text (aka invalid)
 ///
 /// Example:
 /// ```rust
@@ -48,10 +60,12 @@ pub enum Input {
 ///
 pub fn valid_input(itype: &str) -> Result<Input> {
     return match itype.to_lowercase().as_str() {
+        "csv" => Ok(Input::Csv),
         "plain" => Ok(Input::Plain),
         "txt" => Ok(Input::Plain),
         "gzip" => Ok(Input::Gzip),
         "gz" => Ok(Input::Gzip),
+        "xml" => Ok(Input::Xml),
         "zip" => Ok(Input::Zip),
         _ => Err(anyhow!("Invalid type")),
     };
@@ -65,38 +79,40 @@ pub fn ext_to_ftype(p: &Path) -> Input {
         Some(ext) => ext,
         _ => OsStr::new("txt"),
     }
-        .to_owned();
+    .to_owned();
     match ext.into_string().unwrap().to_lowercase().as_str() {
+        "csv" => Input::Csv,
         "zip" => Input::Zip,
         "txt" => Input::Plain,
-        "xml" => Input::Plain,
+        "xml" => Input::Xml,
         "gz" => Input::Gzip,
         _ => Input::Plain,
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::path::PathBuf;
     use rstest::rstest;
 
     #[rstest]
+    #[case("foo", Input::Plain)]
+    #[case("foo.txt", Input::Plain)]
     #[case("foo.zip", Input::Zip)]
     #[case("foo.ZIP", Input::Zip)]
     #[case("foo.gz", Input::Gzip)]
     #[case("foo.GZ", Input::Gzip)]
     #[case("foo.Gz", Input::Gzip)]
-    #[case("foo.xml", Input::Plain)]
-    #[case("foo.XML", Input::Plain)]
-    #[case("foo.csv", Input::Plain)]
-    #[case("foo.CSV", Input::Plain)]
+    #[case("foo.xml", Input::Xml)]
+    #[case("foo.XML", Input::Xml)]
+    #[case("foo.csv", Input::Csv)]
+    #[case("foo.CSV", Input::Csv)]
     #[case(".CSV", Input::Plain)]
     fn test_ext_to_ftype(#[case] f: PathBuf, #[case] t: Input) {
         let p = PathBuf::from(f);
         assert_eq!(t, ext_to_ftype(&p))
     }
-
 
     #[rstest]
     #[case("plain", Input::Plain)]
