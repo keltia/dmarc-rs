@@ -3,10 +3,9 @@
 
 // Std library
 //
-use std::ffi::OsStr;
 use std::fs::File;
 use std::io;
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 // Internal crates
 //
