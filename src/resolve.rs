@@ -1,6 +1,6 @@
 //! Module handling the DNS resolving operations
 //!
-//! We use `IpList` as container and `resolv()` is the main function to get all names.  As we have
+//! We use `IpList` as container and `resolve()` is the main function to get all names.  As we have
 //! the choice between two solvers, you can select the simple single-threaded one by specifying
 //! that you want only 1 job.
 //!
@@ -8,20 +8,10 @@
 //! bound for the parallelism.  The `dmarc-cat` binary will default to number physical cores but the hard
 //! limit is the number of total core threads (which is higher if the CPU supports Hyperthreading).
 //!
-//! Example:
-//! ```
-//! # use dmarc_rs::resolve::resolve;
-//! # use dmarc_rs::iplist::IpList;
-//! let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+//! **NOTE** I have no idea how CPU with different cores types (Apple M1 family or others) are handled,
+//! not sure it would make any difference in this case.
 //!
-//! // Using the simple single threaded solver.
-//! let ptr = resolve(&l, 1).unwrap();
-//!
-//! // Use the parallel solver with 4 threads.
-//! let ptr2 = resolve(&l, num_cpus::get()).unwrap();
-//! ```
-//!
-//! BUGS: this version only handle one name per IP (whatever is returned by `lookup_addr()`.
+//! **BUGS** this version only handle one name per IP (whatever is returned by `lookup_addr()`.
 //!
 
 // Our crates
@@ -37,6 +27,19 @@ use anyhow::{anyhow, Result};
 
 /// `resolve()` is the main function call to get all names from the list of `Ip` we get from the
 /// XML file.
+///
+/// Example:
+/// ```no_run
+/// # use dmarc_rs::resolve::resolve;
+/// # use dmarc_rs::iplist::IpList;
+/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+///
+/// // Using the simple single threaded solver.
+/// let ptr = resolve(&l, 1).unwrap();
+///
+/// // Use the parallel solver with as many threads as the CPU has.
+/// let ptr2 = resolve(&l, num_cpus::get()).unwrap();
+/// ```
 ///
 pub fn resolve(ipl: &IpList, njobs: usize) -> Result<IpList> {
     let max_threads = num_cpus::get();
