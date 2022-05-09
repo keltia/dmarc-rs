@@ -91,7 +91,7 @@ impl Entry {
     ///
     pub fn get_data(self) -> Result<String> {
         match self.ft {
-            Input::Csv|Input::Xml|Input::Plain => {
+            Input::Csv | Input::Xml | Input::Plain => {
                 let fh = match File::open(&self.p) {
                     Ok(fh) => fh,
                     Err(e) => return Err(anyhow!("{}", e.to_string())),
@@ -100,7 +100,7 @@ impl Entry {
                 let mut s = String::new();
                 let _cnt = lines.read_to_string(&mut s);
                 Ok(s)
-            },
+            }
             Input::Zip => unimplemented!(),
             Input::Gzip => unimplemented!(),
         }

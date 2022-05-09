@@ -61,8 +61,8 @@ pub mod version;
 
 // Our crates
 //
-use cli::Opts;
 use crate::file::{check_for_files, scan_list};
+use cli::Opts;
 use dmarc_rs::filetype::*;
 use version::version;
 
@@ -105,7 +105,7 @@ fn main() -> Result<()> {
     //
     let flist = check_for_files(&flist);
     if flist.is_empty() {
-        return Err(anyhow!("No valid files"))
+        return Err(anyhow!("No valid files"));
     }
 
     // Do the thing.

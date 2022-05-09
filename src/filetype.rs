@@ -93,8 +93,8 @@ pub fn ext_to_ftype(p: &Path) -> Input {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
     use rstest::rstest;
+    use std::path::PathBuf;
 
     #[rstest]
     #[case("foo", Input::Plain)]

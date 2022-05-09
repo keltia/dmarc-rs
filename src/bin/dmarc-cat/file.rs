@@ -69,22 +69,25 @@ mod tests {
     use super::*;
     #[test]
     fn test_scan_list_empty() {
-        let r = scan_list(&vec![Entry{p: PathBuf::from(""), ft: Input::Plain}]);
+        let r = scan_list(&vec![Entry {
+            p: PathBuf::from(""),
+            ft: Input::Plain,
+        }]);
         assert!(r.is_err())
     }
 
     #[test]
     fn test_scan_list_nonexistent() {
-        let r = scan_list(&vec![Entry{p: PathBuf::from("/nonexistent"), ft: Input::Plain}]);
+        let r = scan_list(&vec![Entry {
+            p: PathBuf::from("/nonexistent"),
+            ft: Input::Plain,
+        }]);
         assert!(r.is_err())
     }
 
     #[test]
     fn test_check_for_unknown_files() {
-        let l = vec![
-            PathBuf::from("foo"),
-            PathBuf::from("bar")
-        ];
+        let l = vec![PathBuf::from("foo"), PathBuf::from("bar")];
 
         let l2 = check_for_files(&l);
         assert!(l2.is_empty())
@@ -100,7 +103,13 @@ mod tests {
 
         let l2 = check_for_files(&l);
         assert!(!l2.is_empty());
-        assert_eq!(vec![Entry { p: PathBuf::from("Cargo.toml"), ft: Input::Plain }], l2);
+        assert_eq!(
+            vec![Entry {
+                p: PathBuf::from("Cargo.toml"),
+                ft: Input::Plain
+            }],
+            l2
+        );
     }
 
     #[test]
@@ -114,10 +123,18 @@ mod tests {
 
         let l2 = check_for_files(&l);
         assert_eq!(2, l2.len());
-        assert_eq!(vec![
-            Entry{p: PathBuf::from("-"), ft: Input::Plain},
-            Entry{p: PathBuf::from("Cargo.toml"), ft: Input::Plain},
-        ], l2);
+        assert_eq!(
+            vec![
+                Entry {
+                    p: PathBuf::from("-"),
+                    ft: Input::Plain
+                },
+                Entry {
+                    p: PathBuf::from("Cargo.toml"),
+                    ft: Input::Plain
+                },
+            ],
+            l2
+        );
     }
-
 }

@@ -47,7 +47,7 @@ pub fn resolve(ipl: &IpList, njobs: usize) -> Result<IpList> {
     // Put a hard limit on how many parallel thread to the max number of cores (incl. Hyperthreading).
     //
     if njobs > max_threads {
-        return Err(anyhow!("Too many threads"))
+        return Err(anyhow!("Too many threads"));
     }
 
     // Call the appropriate one

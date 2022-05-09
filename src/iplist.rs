@@ -448,12 +448,11 @@ mod tests {
 
     #[test]
     fn test_from_array_str() {
-        let l = IpList(
-            vec![
-                Ip::new("1.1.1.1"),
-                Ip::new("2606:4700:4700::1111"),
-                Ip::new("192.0.2.1"),
-            ]);
+        let l = IpList(vec![
+            Ip::new("1.1.1.1"),
+            Ip::new("2606:4700:4700::1111"),
+            Ip::new("192.0.2.1"),
+        ]);
 
         let l2 = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 
@@ -464,22 +463,20 @@ mod tests {
     fn test_from_array_tuples() {
         use std::net::IpAddr;
 
-        let l = IpList(
-            vec![
-                Ip {
-                    ip: "1.1.1.1".parse::<IpAddr>().unwrap(),
-                    name: "one.one.one.one".into(),
-                },
-                Ip {
-                    ip: "2606:4700:4700::1111".parse::<IpAddr>().unwrap(),
-                    name: "one.one.one.one".into(),
-                },
-                Ip {
-                    ip: "192.0.2.1".parse::<IpAddr>().unwrap(),
-                    name: "some.host.invalid".into(),
-                },
-            ],
-        );
+        let l = IpList(vec![
+            Ip {
+                ip: "1.1.1.1".parse::<IpAddr>().unwrap(),
+                name: "one.one.one.one".into(),
+            },
+            Ip {
+                ip: "2606:4700:4700::1111".parse::<IpAddr>().unwrap(),
+                name: "one.one.one.one".into(),
+            },
+            Ip {
+                ip: "192.0.2.1".parse::<IpAddr>().unwrap(),
+                name: "some.host.invalid".into(),
+            },
+        ]);
         let l2 = IpList::from([
             ("1.1.1.1", "one.one.one.one"),
             ("2606:4700:4700::1111", "one.one.one.one"),
