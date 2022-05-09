@@ -85,7 +85,7 @@ impl Entry {
     ///
     /// let xml = match f.get_data() {
     ///     Ok(s) => s,
-    ///     Err(e) => anyhow!("Error reading.")
+    ///     Err(e) => anyhow!("Error reading.").to_string(),
     /// };
     /// ```
     ///
@@ -162,7 +162,7 @@ mod tests {
     }
 
     #[test]
-    fn test_entry_get_xml() {
+    fn test_entry_get_data() {
         let f = Entry::from("Cargo.toml");
 
         let txt = f.get_data();
