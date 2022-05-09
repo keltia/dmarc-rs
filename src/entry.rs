@@ -142,7 +142,7 @@ mod tests {
 
     #[test]
     fn test_set() {
-        let e = Entry::new(&PathBuf::from("foo")).set(Input::Gzip);
+        let e = Entry::from("foo").set(Input::Gzip);
         assert_eq!(Input::Gzip, e.ft);
     }
 
