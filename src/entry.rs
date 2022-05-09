@@ -127,6 +127,19 @@ mod tests {
         assert_eq!(res, e.ft);
     }
 
+    #[rstest]
+    #[case("", Input::Plain)]
+    #[case("foo", Input::Plain)]
+    #[case("foo.zip", Input::Zip)]
+    #[case("bar.gz", Input::Gzip)]
+    #[case("baz.xml.gz", Input::Gzip)]
+    fn test_from(#[case] p: &str, #[case] res: Input) {
+        let e = Entry::from(p);
+        let f = Entry::new(&PathBuf::from(p));
+        assert_eq!(res, e.ft);
+        assert_eq!(f, e);
+    }
+
     #[test]
     fn test_set() {
         let e = Entry::new(&PathBuf::from("foo")).set(Input::Gzip);
