@@ -72,9 +72,12 @@ impl Entry {
 
     /// Open the given file and return the content as a String.
     ///
+    /// This is where we call the different functions for the different types of
+    /// input files.
+    ///
     /// NOTE: plain files are assumed to be XML.
     ///
-    pub fn get_xml(self) -> Result<String> {
+    pub fn get_data(self) -> Result<String> {
         match self.ft {
             Input::Csv|Input::Xml|Input::Plain => {
                 let fh = match File::open(&self.p) {
@@ -150,7 +153,7 @@ mod tests {
     fn test_entry_get_xml() {
         let f = Entry::from("Cargo.toml");
 
-        let txt = f.get_xml();
+        let txt = f.get_data();
         assert!(txt.is_ok());
         let txt = txt.unwrap();
         assert!(txt.contains("dmarc-rs"))
