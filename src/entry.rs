@@ -75,7 +75,19 @@ impl Entry {
     /// This is where we call the different functions for the different types of
     /// input files.
     ///
-    /// NOTE: plain files are assumed to be XML.
+    /// **NOTE** plain files are assumed to be XML.
+    ///
+    /// Example:
+    /// ```
+    /// # use anyhow::anyhow;
+    /// # use dmarc_rs::entry::Entry;
+    /// let f = Entry::from("foo.xml");
+    ///
+    /// let xml = match f.get_data() {
+    ///     Ok(s) => s,
+    ///     Err(e) => anyhow!("Error reading.")
+    /// };
+    /// ```
     ///
     pub fn get_data(self) -> Result<String> {
         match self.ft {
