@@ -114,7 +114,13 @@ impl From<(&str, &str)> for Ip {
 mod tests {
     use super::*;
 
+    use IpAddr::*;
+
     use rstest::rstest;
+    //use mockall::*;
+    //use mockall::predicate::*;
+
+    use double::*;
 
     #[rstest]
     #[case("0.0.0.0")]
@@ -144,11 +150,38 @@ mod tests {
         let _a1 = Ip::new(s);
     }
 
+    //#[automock]
+    trait Lookup {
+        fn lookup_addr(&self, ip: &IpAddr) -> Result<String, ()>;
+    }
+
+    fn lookup_addr(ip: &IpAddr) -> Result<String, ()> {
+        let ip = ip.to_string();
+        println!("BEEP");
+        match ip.as_str() {
+            "1.1.1.1" => Ok("one.one.one.one".into()),
+            "2606:4700:4700::1111" => Ok("one.one.one.one".into()),
+            "192.0.2.1" => Ok("some.host.invalid".into()),
+            _ => Ok("blah".into()),
+        }
+    }
+
+    mock_trait_no_default!(
+        MockLookup,
+        lookup_addr(&'static IpAddr) -> Result<String, ()>
+    );
+
+    impl Lookup for MockLookup {
+        mock_method!(lookup_addr(&self, ip: &IpAddr) -> Result<String, ()>);
+    }
+
     #[rstest]
     #[case("1.1.1.1", "one.one.one.one")]
     #[case("2606:4700:4700::1111", "one.one.one.one")]
     #[case("192.0.2.1", "some.host.invalid")]
     fn test_ip_solve(#[case] s: &str, #[case] p: &str) {
+        let mock = MockLookup::new(Ok("foo.bar".to_owned()));
+
         let ptr = Ip::new(s).solve();
         assert_eq!(s.parse::<IpAddr>().unwrap(), ptr.ip);
         assert_eq!(p.to_string(), ptr.name);
