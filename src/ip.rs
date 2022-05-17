@@ -144,12 +144,34 @@ mod tests {
         let _a1 = Ip::new(s);
     }
 
+    use mockall::*;
+    use mockall::predicate::*;
+
+    #[automock]
+    trait Solve {
+        fn lookup_addr(ip: &IpAddr) -> Result<String, ()>;
+    }
+
+    fn lookup_addr(ip: String) -> Result<String, ()> {
+        match ip.as_str() {
+            "1.1.1.1" => Ok("one.one.one.one".into()),
+            "2606:4700:4700::1111" => Ok("one.one.one.one".into()),
+            "192.0.2.1" => Ok("some.host.invalid".into()),
+            _ => Ok("foo.bar".into()),
+        }
+    }
+
     #[rstest]
     #[case("1.1.1.1", "one.one.one.one")]
     #[case("2606:4700:4700::1111", "one.one.one.one")]
     #[case("192.0.2.1", "some.host.invalid")]
     fn test_ip_solve(#[case] s: &str, #[case] p: &str) {
+        let ctx = MockSolve::lookup_addr_context();
+        ctx.expect()
+            .returning(|x| lookup_addr(x.to_string()));
+
         let ptr = Ip::new(s).solve();
+        assert_eq!(Ok(p.to_string()), MockSolve::lookup_addr(&s.parse::<IpAddr>().unwrap()));
         assert_eq!(s.parse::<IpAddr>().unwrap(), ptr.ip);
         assert_eq!(p.to_string(), ptr.name);
     }
