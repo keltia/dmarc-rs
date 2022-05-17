@@ -17,9 +17,6 @@
 //! let me = Ip::from(("::1", "localhost"));
 //! ```
 //!
-//! The `solve()`  method does the A/AAAA to PTR conversion with a twist: if the IP can't be
-//! resolved it returns "some.host.invalid".
-//!
 
 // Std library
 //

@@ -43,6 +43,7 @@ use std::thread;
 
 // External crates
 //
+use crate::resolve::{RealSolver, Resolver};
 use anyhow::Result;
 use threadpool::ThreadPool;
 
@@ -55,7 +56,9 @@ use threadpool::ThreadPool;
 /// list of `Ip` inside.
 ///
 #[derive(Debug, Eq, PartialOrd, Ord, PartialEq)]
-pub struct IpList(Vec<Ip>);
+pub struct IpList {
+    l: Vec<Ip>,
+}
 
 /// Implement the Default Trait.
 ///
@@ -65,7 +68,10 @@ impl Default for IpList {
     }
 }
 
-impl IpList {
+impl<R> IpList<R>
+where
+    R: Resolver,
+{
     /// Basic new()
     ///
     /// Example:
@@ -77,7 +83,9 @@ impl IpList {
     ///
     #[inline]
     pub fn new() -> Self {
-        IpList(vec![])
+        IpList {
+            l: vec![],
+        }
     }
 
     /// Convert a list of IP into names with multiple threads
@@ -94,7 +102,7 @@ impl IpList {
     /// let ptr = l.parallel_solve(4);
     /// ```
     ///
-    pub fn parallel_solve(&self, njobs: usize) -> IpList {
+    pub fn parallel_solve(&self, njobs: usize) -> Self {
         let mut full = IpList::new();
         let s = self.len();
 
@@ -104,7 +112,7 @@ impl IpList {
         for ip in fan_in(rx_out).unwrap() {
             full.push(ip);
         }
-        full.0.sort();
+        full.l.sort();
         dbg!(&full);
         full
     }
@@ -115,7 +123,7 @@ impl IpList {
         let (tx, rx) = channel();
 
         // construct a copy of the list
-        let all: Vec<Ip> = self.0.clone();
+        let all: Vec<Ip> = self.l.clone();
 
         // use that copy to send over
         thread::spawn(move || {
@@ -140,11 +148,11 @@ impl IpList {
     pub fn simple_solve(&self) -> Self {
         let mut r = IpList::new();
 
-        for ip in self.0.iter() {
+        for ip in self.l.iter() {
             let ip = ip.solve();
             r.push(ip.clone());
         }
-        r.0.sort();
+        r.l.sort();
         r
     }
 
@@ -160,7 +168,7 @@ impl IpList {
     ///
     #[inline]
     pub fn push(&mut self, ip: Ip) {
-        self.0.push(ip);
+        self.l.push(ip);
     }
 
     /// Implement len() or IPList
@@ -176,7 +184,7 @@ impl IpList {
     ///
     #[inline]
     pub fn len(&self) -> usize {
-        self.0.len()
+        self.l.len()
     }
 
     /// Implement is_empty() as a complement to len()
@@ -191,7 +199,7 @@ impl IpList {
     ///
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.0.is_empty()
+        self.l.is_empty()
     }
 }
 
@@ -205,13 +213,13 @@ impl IntoIterator for IpList {
     ///
     #[inline]
     fn into_iter(self) -> Self::IntoIter {
-        self.0.into_iter()
+        self.l.into_iter()
     }
 }
 
 /// Create an `IpList` from an iterator of `&str`.
 ///
-impl<const N: usize> From<[(&str, &str); N]> for IpList {
+impl<R: Resolver, const N: usize> From<[(&str, &str); N]> for IpList {
     /// Used as a shortcut to `from_iter()`
     ///
     /// Example:
@@ -230,7 +238,7 @@ impl<const N: usize> From<[(&str, &str); N]> for IpList {
 
 /// Create an `IpList` from an iterator of `(&str,&str)` tuples.
 ///
-impl<const N: usize> From<[&str; N]> for IpList {
+impl<R: Resolver, const N: usize> From<[&str; N]> for IpList {
     /// Used as a shortcut to `from_iter()`
     ///
     /// Example:
@@ -307,7 +315,7 @@ impl Index<usize> for IpList {
     ///
     #[inline]
     fn index(&self, index: usize) -> &Self::Output {
-        &self.0[index]
+        &self.l[index]
     }
 }
 
@@ -325,7 +333,7 @@ impl IndexMut<usize> for IpList {
     ///
     #[inline]
     fn index_mut(&mut self, index: usize) -> &mut Self::Output {
-        &mut self.0[index]
+        &mut self.l[index]
     }
 }
 
@@ -377,7 +385,7 @@ mod tests {
         l.push(Ip::new("1.0.0.1"));
 
         assert_eq!(2, l.len());
-        assert_eq!("9.9.9.9", l.0[0].ip.to_string());
+        assert_eq!("9.9.9.9", l.l[0].ip.to_string());
     }
 
     #[test]
@@ -405,7 +413,7 @@ mod tests {
         let a = IpList::new();
 
         let r = a.parallel_solve(num_cpus::get_physical());
-        assert!(r.0.is_empty())
+        assert!(r.l.is_empty())
     }
 
     #[test]
@@ -413,7 +421,7 @@ mod tests {
         let a = IpList::new();
         let r = a.simple_solve();
 
-        assert!(r.0.is_empty())
+        assert!(r.l.is_empty())
     }
 
     #[test]
