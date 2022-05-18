@@ -60,12 +60,16 @@ use anyhow::{anyhow, Result};
 use threadpool::ThreadPool;
 
 /// This trait will allow us to override the resolving function during tests.
+///
 pub trait Resolver {
     /// Get the PTR record associated with `ip`.
     fn lookup_addr(&self, ip: &IpAddr) -> Result<String, std::io::Error>;
+    /// Get the IP 2 PTR for all elements in `IpList`
     fn solve(&self, ipl: IpList, njobs: usize) -> Result<IpList>;
 }
 
+/// Empty struct here only to be an implementation of the `Resolver` trait.
+///
 pub struct RealSolver {}
 
 impl RealSolver {
@@ -183,6 +187,10 @@ impl RealSolver {
 }
 
 impl Resolver for RealSolver {
+    /// This is the function that does DNS resolution, from IP to name/PTR.
+    ///
+    /// We are currently using the `lookup_addr◌` implementation from the `dns_lookup` crate.
+    ///
     fn lookup_addr(&self, ip: &IpAddr) -> Result<String, Error> {
         dns_lookup::lookup_addr(ip)
     }
@@ -225,25 +233,31 @@ impl Resolver for RealSolver {
 }
 
 impl Debug for RealSolver {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
 }
 
+/// Empty struct here only to be an implementation of the `Resolver` trait.
+///
 pub struct DumbSolver {}
 
 impl Resolver for DumbSolver {
-    fn lookup_addr(&self, ip: &IpAddr) -> Result<String, Error> {
+    /// Return an easy and totally wrong name.
+    ///
+    fn lookup_addr(&self, _ip: &IpAddr) -> Result<String, Error> {
         Ok("dumb.host.name".into())
     }
 
-    fn solve(&self, ipl: IpList, njobs: usize) -> Result<IpList> {
+    /// Return the whole list unchanged.
+    ///
+    fn solve(&self, ipl: IpList, _njobs: usize) -> Result<IpList> {
         Ok(ipl)
     }
 }
 
 impl Debug for DumbSolver {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
 }
