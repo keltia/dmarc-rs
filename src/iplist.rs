@@ -223,18 +223,18 @@ impl<'a> FromIterator<(&'a str, &'a str)> for IpList {
 
 /// Actual implementation of `IpList::from_iter` for an array of `Ip`, enabling `collect()` support
 ///
-/// Example:
-/// ```
-/// # use dmarc_rs::ip::Ip;
-/// # use dmarc_rs::iplist::IpList;
-/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111"]);
-///
-/// let s: IpList = l.into_iter().map(|_| Ip::new("0.0.0.0")).collect();
-/// assert_eq!(2, s.len());
-/// assert_eq!("0.0.0.0".to_string(), s[0].ip.to_string());
-/// ```
-///
 impl FromIterator<Ip> for IpList {
+    /// Example:
+    /// ```
+    /// # use dmarc_rs::ip::Ip;
+    /// # use dmarc_rs::iplist::IpList;
+    /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111"]);
+    ///
+    /// let s: IpList = l.into_iter().map(|_| Ip::new("0.0.0.0")).collect();
+    /// assert_eq!(2, s.len());
+    /// assert_eq!("0.0.0.0".to_string(), s[0].ip.to_string());
+    /// ```
+    ///
     #[inline]
     fn from_iter<I: IntoIterator<Item = Ip>>(iter: I) -> Self {
         let mut ipl = IpList::new();
