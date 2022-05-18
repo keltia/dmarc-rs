@@ -48,7 +48,7 @@ impl Entry {
     pub fn new(p: &PathBuf) -> Self {
         Entry {
             p: p.to_owned(),
-            ft: ext_to_ftype(&p),
+            ft: ext_to_ftype(p),
         }
     }
 
