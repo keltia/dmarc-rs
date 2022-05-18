@@ -54,6 +54,7 @@
 pub mod analyze;
 pub mod cli;
 pub mod file;
+pub mod resolve;
 pub mod version;
 
 // Std library
