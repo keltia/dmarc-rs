@@ -175,6 +175,14 @@ impl<const N: usize> From<[&str; N]> for IpList {
     }
 }
 
+impl From<Ip> for IpList {
+    /// Create an `IpList` from a single `Ip`.
+    ///
+    fn from(ip: Ip) -> Self {
+        Self(vec![ip])
+    }
+}
+
 /// Actual implementation of `IpList::from_iter` for an array of `&str`
 ///
 impl<'a> FromIterator<&'a str> for IpList {
@@ -317,6 +325,17 @@ mod tests {
 
         ipl.push(Ip::new("1.0.0.1"));
         assert_eq!(false, ipl.is_empty());
+    }
+
+    #[test]
+    fn test_from_ip() {
+        let ip = Ip::new("1.0.0.1");
+        let ipl = IpList::from(ip);
+        let r = IpList(vec![
+            Ip::new("1.0.0.1"),
+        ]);
+
+        assert_eq!(r, ipl);
     }
 
     #[test]
