@@ -71,6 +71,7 @@ use version::version;
 //
 use anyhow::{anyhow, Result};
 use clap::Parser;
+use dmarc_rs::resolver::{res_init, ResType};
 
 /// Main entry point
 ///
@@ -85,6 +86,13 @@ fn main() -> Result<()> {
 
     let mut flist = opts.files.to_owned();
     let mut ftype = Input::Plain;
+
+    // Handle --no-resolv flag
+    //
+    let mut res = res_init(ResType::Real);
+    if opts.noresolve {
+        res = res_init(ResType::Null);
+    }
 
     // If no arguments, we assume stdin and we enforece the presence of `-t`.
     //
