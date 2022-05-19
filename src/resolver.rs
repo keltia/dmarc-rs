@@ -1,6 +1,8 @@
 //! module implementing a generic DNS Resolver trait with several different
 //! implementation for both testing and run-time behaviour change.
 //!
+//! **BUGS** this version only handle one name per IP (whatever is returned by `lookup_addr()`.
+//!
 
 // Std Library
 //
