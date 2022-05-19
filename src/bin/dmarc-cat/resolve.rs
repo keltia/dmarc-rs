@@ -16,41 +16,44 @@
 //! solver, the other one is `parallel_solve()` which is using threads from a pool to implement a
 //! worker-based fan-out/fan-in scheme with channels to move data around.
 //!
+//! You can select the resolving module to be used from the three defined in `dmarc_rs::resolver`.
+//!
 //! Examples:
 //! ```rust
 //! # use dmarc_rs::iplist::IpList;
+//! # use dmarc_rs::resolver::*;
 //! let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+//! let res = res_init(ResType::Real);
 //!
 //! // Use the simple solver
-//! let ptr = simple_solve();
+//! let ptr = resolve(l, 1, &res);
 //! dbg!(&ptr);
 //! ```
-//! and with the parallel solver:
+//! and with the parallel solver but with the default resolver:
 //! ```rust
 //! # use dmarc_rs::iplist::IpList;
+//! # use dmarc_rs::resolver::*;
 //! // Get the number of physical cores, I prefer to use this one instead of the potentially
 //! // larger total cores because Hyperthreading has some overhead.
 //! let njobs = num_cpus::get_physical();
+//!
 //! let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+//! let res = res_init(ResType::default());
 //!
 //! // Use the parallel solver
-//! let ptr = parallel_solve(njobs);
+//! let ptr = parallel_solve(l, njobs, res);
 //! dbg!(&ptr);
 //! ```
-//!
-//! **BUGS** this version only handle one name per IP (whatever is returned by `lookup_addr()`.
 //!
 
 // Our crates
 //
 use dmarc_rs::ip::Ip;
 use dmarc_rs::iplist::IpList;
+use dmarc_rs::resolver::*;
 
 // Std library
 //
-use std::fmt::{Debug, Formatter};
-use std::io::Error;
-use std::net::IpAddr;
 use std::sync::mpsc::{channel, Receiver};
 use std::thread;
 
@@ -59,207 +62,152 @@ use std::thread;
 use anyhow::{anyhow, Result};
 use threadpool::ThreadPool;
 
-/// This trait will allow us to override the resolving function during tests.
+/// `resolve()` is the main function call to get all names from the list of `Ip` we get from the
+/// XML file.
 ///
-pub trait Resolver {
-    /// Get the PTR record associated with `ip`.
-    fn lookup_addr(&self, ip: &IpAddr) -> Result<String, std::io::Error>;
-    /// Get the IP 2 PTR for all elements in `IpList`
-    fn solve(&self, ipl: IpList, njobs: usize) -> Result<IpList>;
+/// Example:
+/// ```no_run
+/// # use dmarc_rs::iplist::IpList;
+/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+///
+/// // Select a resolver
+/// let res = res_init(ResType::Real);
+///
+/// // Using the simple single threaded solver.
+/// let ptr = resolve(l, 1, res).unwrap();
+///
+/// // Use the parallel solver with as many threads as the CPU has.
+/// let ptr2 = resolve(l, num_cpus::get(), res).unwrap();
+/// ```
+///
+pub fn resolve(ipl: IpList, njobs: usize, res: &Solver) -> Result<IpList> {
+    let max_threads = num_cpus::get();
+
+    // Put a hard limit on how many parallel thread to the max number of cores (incl.
+    // avoid overhead even on modern versions of Hyperthreading).
+    //
+    if njobs > max_threads {
+        return Err(anyhow!("Too many threads"));
+    }
+
+    // Call the appropriate one
+    //
+    match njobs {
+        1 => Ok(simple_solve(&ipl, res)),
+        _ => Ok(parallel_solve(ipl, njobs, res)),
+    }
 }
 
-/// Empty struct here only to be an implementation of the `Resolver` trait.
+/// Simple and straightforward sequential solver
 ///
-pub struct RealSolver {}
+/// Example:
+/// ```
+/// # use dmarc_rs::iplist::IpList;
+/// # use dmarc_rs::ip::Ip;
+/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+///
+/// // select a given resolver
+/// let res = RealResolver{};
+///
+/// let ptr = res.simple_solve(l);
+/// ```
+///
+fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
+    let mut r: IpList = ipl
+        .clone()
+        .into_iter()
+        .map(|ip| res.solve(ip))
+        .collect();
+    r.sort();
+    r
+}
 
-impl RealSolver {
-    /// Simple and straightforward sequential solver
-    ///
-    /// Example:
-    /// ```
-    /// # use dmarc_rs::iplist::IpList;
-    /// # use dmarc_rs::ip::Ip;
-    /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-    ///
-    /// // select a given resolver
-    /// let res = RealResolver{};
-    ///
-    /// let ptr = res.simple_solve(l);
-    /// ```
-    ///
-    fn simple_solve(&self, ipl: &IpList) -> IpList {
-        let mut r:IpList = ipl.clone().into_iter().map(|ip| {
-            Ip {
-                ip: ip.ip,
-                name: self.lookup_addr(&ip.ip).unwrap(),
-            }
-        }).collect();
-        r.sort();
-        r
+/// Convert a list of IP into names with multiple threads
+///
+/// It uses a function to fill in the input channel then fan_out/fan_in to fill the result
+/// list.
+///
+/// Example:
+/// ```no_run
+/// # use dmarc_rs::ip::Ip;
+/// # use dmarc_rs::iplist::IpList;
+/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+///
+/// // Select a resolver
+/// let r = RealResolver{};
+///
+/// let ptr = parallel_solve(l, 4, r);
+/// ```
+///
+fn parallel_solve(ipl: IpList, njobs: usize, res: &Solver) -> IpList {
+    let mut full = IpList::new();
+    let s = ipl.len();
+
+    let pool = ThreadPool::new(njobs);
+    let rx_gen = queue(ipl).unwrap();
+    let rx_out = fan_out(rx_gen, pool, s, res).unwrap();
+    for ip in fan_in(rx_out).unwrap() {
+        full.push(ip);
     }
+    full.sort();
+    dbg!(&full);
+    full
+}
 
-    /// Convert a list of IP into names with multiple threads
-    ///
-    /// It uses a function to fill in the input channel then fan_out/fan_in to fill the result
-    /// list.
-    ///
-    /// Example:
-    /// ```no_run
-    /// # use dmarc_rs::ip::Ip;
-    /// # use dmarc_rs::iplist::IpList;
-    /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-    ///
-    /// // Select a resolver
-    /// let r = RealResolver{};
-    ///
-    /// let ptr = parallel_solve(l, 4, r);
-    /// ```
-    ///
-    fn parallel_solve(&self, ipl: IpList, njobs: usize) -> IpList {
-        let mut full = IpList::new();
-        let s = ipl.len();
+/// Take all values from the list and send them into a queue+
+///
+fn queue(ipl: IpList) -> Result<Receiver<Ip>> {
+    let (tx, rx) = channel();
 
-        let pool = ThreadPool::new(njobs);
-        let rx_gen = &self.queue(ipl).unwrap();
-        let rx_out = self.fan_out(rx_gen, pool, s).unwrap();
-        for ip in self.fan_in(rx_out).unwrap() {
-            full.push(ip);
+    // construct a copy of the list
+    //let all: Vec<Ip> = ipl.l.clone();
+
+    // use that copy to send over
+    thread::spawn(move || {
+        for ip in ipl.into_iter() {
+            tx.send(ip.clone()).expect("can not queue")
         }
-        full.sort();
-        dbg!(&full);
-        full
-    }
+    });
+    Ok(rx)
+}
 
-    /// Take all values from the list and send them into a queue+
-    ///
-    fn queue(&self, ipl: IpList) -> Result<Receiver<Ip>> {
-        let (tx, rx) = channel();
+/// Start enough workers to resolve IP into PTR.
+///
+fn fan_out(
+    rx_gen: Receiver<Ip>,
+    pool: ThreadPool,
+    njobs: usize,
+    res: &Solver,
+) -> Result<Receiver<Ip>, Box<dyn std::error::Error>> {
+    let (tx, rx) = channel();
 
-        // construct a copy of the list
-        //let all: Vec<Ip> = ipl.l.clone();
+    for _ in 0..njobs {
+        let tx = tx.clone();
+        let n = rx_gen.recv().unwrap();
 
-        // use that copy to send over
-        thread::spawn(move || {
-            for ip in ipl.into_iter() {
-                tx.send(ip.clone()).expect("can not queue")
-            }
+        let res = res.clone();
+        pool.execute(move || {
+            let name: Ip = res.solve(n);
+            tx.send(Ip {
+                ip: name.ip,
+                name: name.name.to_owned(),
+            })
+                .expect("waiting channel");
         });
-        Ok(rx)
     }
-
-    /// Start enough workers to resolve IP into PTR.
-    ///
-    fn fan_out(
-        &self,
-        rx_gen: &Receiver<Ip>,
-        pool: ThreadPool,
-        njobs: usize,
-    ) -> Result<Receiver<Ip>, Box<dyn std::error::Error>> {
-        let (tx, rx) = channel();
-
-        for _ in 0..njobs {
-            let tx = tx.clone();
-            let n = rx_gen.recv().unwrap();
-
-            pool.execute(move || {
-                let name = &self.lookup_addr(&n.ip).unwrap();
-                tx.send(Ip {
-                    ip: n.ip,
-                    name: name.to_owned(),
-                })
-                    .expect("waiting channel");
-            });
-        }
-        Ok(rx)
-    }
-
-    /// Gather all results into an output channel
-    ///
-    fn fan_in(&self, rx_out: Receiver<Ip>) -> Result<Receiver<Ip>, Box<dyn std::error::Error>> {
-        let (tx, rx) = channel();
-        thread::spawn(move || {
-            for ip in rx_out.iter() {
-                tx.send(ip).expect("can not send");
-            }
-        });
-        Ok(rx)
-    }
+    Ok(rx)
 }
 
-impl Resolver for RealSolver {
-    /// This is the function that does DNS resolution, from IP to name/PTR.
-    ///
-    /// We are currently using the `lookup_addr◌` implementation from the `dns_lookup` crate.
-    ///
-    fn lookup_addr(&self, ip: &IpAddr) -> Result<String, Error> {
-        dns_lookup::lookup_addr(ip)
-    }
-
-    /// `solve()` is the main function call to get all names from the list of `Ip` we get from the
-    /// XML file.
-    ///
-    /// Example:
-    /// ```no_run
-    /// # use dmarc_rs::iplist::IpList;
-    /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-    ///
-    /// // Select a resolver
-    /// let res = RealResolver{};
-    ///
-    /// // Using the simple single threaded solver.
-    /// let ptr = res.solve(&l, 1).unwrap();
-    ///
-    /// // Use the parallel solver with as many threads as the CPU has.
-    /// let ptr2 = res.solve(&l, num_cpus::get()).unwrap();
-    /// ```
-    ///
-    fn solve(&self, ipl: IpList, njobs: usize) -> Result<IpList> {
-        let max_threads = num_cpus::get();
-
-        // Put a hard limit on how many parallel thread to the max number of cores (incl.
-        // avoid overhead even on modern versions of Hyperthreading).
-        //
-        if njobs > max_threads {
-            return Err(anyhow!("Too many threads"));
-        }
-
-        // Call the appropriate one
-        //
-        match njobs {
-            1 => Ok(self.simple_solve(&ipl)),
-            _ => Ok(self.parallel_solve(ipl, njobs)),
-        }
-    }
-}
-
-impl Debug for RealSolver {
-    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
-        todo!()
-    }
-}
-
-/// Empty struct here only to be an implementation of the `Resolver` trait.
+/// Gather all results into an output channel
 ///
-pub struct DumbSolver {}
-
-impl Resolver for DumbSolver {
-    /// Return an easy and totally wrong name.
-    ///
-    fn lookup_addr(&self, _ip: &IpAddr) -> Result<String, Error> {
-        Ok("dumb.host.name".into())
-    }
-
-    /// Return the whole list unchanged.
-    ///
-    fn solve(&self, ipl: IpList, _njobs: usize) -> Result<IpList> {
-        Ok(ipl)
-    }
-}
-
-impl Debug for DumbSolver {
-    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
-        todo!()
-    }
+fn fan_in(rx_out: Receiver<Ip>) -> Result<Receiver<Ip>, Box<dyn std::error::Error>> {
+    let (tx, rx) = channel();
+    thread::spawn(move || {
+        for ip in rx_out.iter() {
+            tx.send(ip).expect("can not send");
+        }
+    });
+    Ok(rx)
 }
 
 #[cfg(test)]
@@ -269,21 +217,21 @@ mod tests {
     #[test]
     fn test_invalid_jobs() {
         let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-        let res = Box::new(DumbSolver{});
+        let res = res_init(ResType::Fake);
 
-        assert!(resolve(&l, 1000, res).is_err())
+        assert!(resolve(l, 1000, &res).is_err())
     }
 
     #[test]
     fn test_resolve() {
         let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-        let res = Box::new(DumbSolver{});
+        let res = res_init(ResType::Fake);
 
         // Using the simple single threaded solver.
-        let ptr = resolve(&l, 1, res).unwrap();
+        let ptr = resolve(l, 1, &res).unwrap();
 
         // Use the parallel solver with 4 threads.
-        let ptr2 = resolve(&l, num_cpus::get(), res).unwrap();
+        let ptr2 = resolve(l, num_cpus::get(), &res).unwrap();
 
         assert_eq!(ptr, ptr2);
     }
@@ -291,9 +239,9 @@ mod tests {
     #[test]
     fn test_parallel_solve_empty() {
         let a = IpList::new();
-        let res = Box::new(DumbSolver{});
+        let res = res_init(ResType::Fake);
 
-        let r = parallel_solve(&a, num_cpus::get_physical(), res);
+        let r = parallel_solve(a, num_cpus::get_physical(), &res);
 
         assert!(r.is_empty())
     }
@@ -301,9 +249,9 @@ mod tests {
     #[test]
     fn test_simple_solve_empty() {
         let a = IpList::new();
-        let res = DumbSolver{};
+        let res = res_init(ResType::Fake);
 
-        let r = res.simple_solve(&a);
+        let r = simple_solve(&a, &res);
 
         assert!(r.is_empty())
     }
@@ -311,9 +259,9 @@ mod tests {
     #[test]
     fn test_solve_empty() {
         let a = IpList::new();
-        let res = DumbSolver{};
+        let res = res_init(ResType::Fake);
 
-        let r = res.solve(a, 1);
+        let r = resolve(a, 1, &res);
 
         assert!(r.is_err());
         assert!(r.unwrap().is_empty());
@@ -322,9 +270,9 @@ mod tests {
     #[test]
     fn test_dumb_simple_solve_ok() {
         let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-        let res = DumbSolver{};
+        let res = res_init(ResType::Fake);
 
-        let ptr = res.simple_solve(&l);
+        let ptr = simple_solve(&l, &res);
 
         assert_eq!(l.len(), ptr.len());
         assert_eq!("one.one.one.one", ptr[0].name.to_string());
@@ -335,9 +283,9 @@ mod tests {
     #[test]
     fn test_dumb_parallel_solve_ok() {
         let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-        let res = DumbSolver{};
+        let res = res_init(ResType::Fake);
 
-        let ptr = res.parallel_solve(&l, num_cpus::get_physical());
+        let ptr = parallel_solve(l, num_cpus::get_physical(), &res);
 
         assert_eq!(l.len(), ptr.len());
         // Order is not always preserved so check inside
@@ -354,9 +302,9 @@ mod tests {
     #[test]
     fn test_dumbsolver_solve() {
         let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-        let res = DumbSolver{};
+        let res = res_init(ResType::Fake);
 
-        let r = res.solve(l, 1);
+        let r = resolve(l, 1, &res);
         assert!(r.is_ok());
         assert_eq!(l, r.unwrap());
     }
