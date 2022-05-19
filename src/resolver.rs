@@ -64,6 +64,8 @@ impl Solver {
     }
 }
 
+/// Enum for selecting the different types of currently supported resolvers.
+///
 #[derive(Debug)]
 pub enum ResType {
     /// For testing, returns a specific value
