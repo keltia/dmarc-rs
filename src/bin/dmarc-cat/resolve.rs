@@ -116,7 +116,7 @@ fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
     let mut r: IpList = ipl
         .clone()
         .into_iter()
-        .map(|ip| res.solve(ip))
+        .map(|ip| res.solve(&ip))
         .collect();
     r.sort();
     r
@@ -187,7 +187,7 @@ fn fan_out(
 
         let res = res.clone();
         pool.execute(move || {
-            let name: Ip = res.solve(n);
+            let name: Ip = res.solve(&n);
             tx.send(Ip {
                 ip: name.ip,
                 name: name.name.to_owned(),
