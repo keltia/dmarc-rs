@@ -46,7 +46,8 @@ use dns_lookup::lookup_addr;
 /// the `Resolver` trait.
 ///
 pub trait Resolver {
-    /// Get the IP 2 PTR for all elements in `IpList`
+    /// Get the name associated with the given `Ip`.
+    ///
     fn solve(&self, ip: &Ip) -> Ip;
 }
 
@@ -56,6 +57,8 @@ pub trait Resolver {
 pub struct Solver(Arc<dyn Resolver + Send + Sync + 'static>);
 
 impl Solver {
+    /// Generic implementation.
+    ///
     pub fn solve(&self, ip: &Ip) -> Ip {
         Ip {
             ip: ip.ip,
