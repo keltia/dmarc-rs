@@ -190,7 +190,7 @@ fn fan_out(
             let name: Ip = res.solve(&n);
             tx.send(Ip {
                 ip: name.ip,
-                name: name.name.to_owned(),
+                name: name.name,
             })
                 .expect("waiting channel");
         });
