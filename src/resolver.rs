@@ -46,6 +46,12 @@ pub enum ResType {
     Real,
 }
 
+impl Default for ResType {
+    fn default() -> Self {
+        ResType::Real
+    }
+}
+
 pub struct NullResolver;
 
 impl NullResolver {
