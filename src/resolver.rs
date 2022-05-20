@@ -235,6 +235,14 @@ mod tests {
     }
 
     #[test]
+    fn test_null_solve() {
+        let a = res_init(ResType::Null);
+
+        let ip = Ip::new("1.1.1.1");
+        assert_eq!("1.1.1.1", a.solve(&ip).name);
+    }
+
+    #[test]
     fn test_real_solve() {
         let a = res_init(ResType::Real);
 
