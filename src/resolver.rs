@@ -66,13 +66,10 @@ pub trait Resolver {
 pub struct Solver(Arc<dyn Resolver + Send + Sync + 'static>);
 
 impl Solver {
-    /// Generic implementation.
+    /// Calling the inner implementation of `solve()`
     ///
     pub fn solve(&self, ip: &Ip) -> Ip {
-        Ip {
-            ip: ip.ip,
-            name: "resolved.invalid".to_string(),
-        }
+        self.0.solve(ip)
     }
 }
 
