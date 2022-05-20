@@ -113,9 +113,9 @@ pub fn resolve(ipl: &IpList, njobs: usize, res: &Solver) -> Result<IpList> {
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// // select a given resolver
-/// let res = RealResolver{};
+/// let res = res_init(ResType::Real);
 ///
-/// let ptr = res.simple_solve(l);
+/// let ptr = simple_solve(l, res);
 /// ```
 ///
 fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
@@ -140,9 +140,9 @@ fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// // Select a resolver
-/// let r = RealResolver{};
+/// let res = res_init(ResType::Real);
 ///
-/// let ptr = parallel_solve(l, 4, r);
+/// let ptr = parallel_solve(l, 4, res);
 /// ```
 ///
 fn parallel_solve(ipl: &IpList, njobs: usize, res: &Solver) -> IpList {
