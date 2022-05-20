@@ -83,6 +83,12 @@ use threadpool::ThreadPool;
 pub fn resolve(ipl: &IpList, njobs: usize, res: &Solver) -> Result<IpList> {
     let max_threads = num_cpus::get();
 
+    // Return an error on empty list
+    // XXX maybe return the empty list?
+    if ipl.is_empty() {
+        return Err(anyhow!(("Empty list")));
+    }
+
     // Put a hard limit on how many parallel thread to the max number of cores (incl.
     // avoid overhead even on modern versions of Hyperthreading).
     //
@@ -259,6 +265,7 @@ mod tests {
     }
 
     #[test]
+    #[should_panic]
     fn test_solve_empty() {
         let a = IpList::new();
         let res = res_init(ResType::Fake);
