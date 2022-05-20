@@ -104,7 +104,7 @@ impl IpList {
     /// # use dmarc_rs::iplist::IpList;
     /// let mut ipl = IpList::from(["224.0.0.1", "1.0.0.1", "2.3.4.5", "1.1.1.1", "192.0.2.1"]);
     ///
-    /// println!(ipl.sort());
+    /// println!("{:?}", ipl.sort());
     /// ```
     ///
     #[inline]
