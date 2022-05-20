@@ -224,3 +224,24 @@ pub fn res_init(t: ResType) -> Solver {
         ResType::Real => Solver(Arc::from(RealResolver::init())),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use std::any::{Any, TypeId};
+    use super::*;
+
+    #[test]
+    fn test_res_init() {
+        let a = res_init(ResType::Null);
+
+        assert_eq!(TypeId::of::<Solver>(), a.type_id());
+    }
+
+    #[test]
+    fn test_real_solve() {
+        let a = res_init(ResType::Real);
+
+        let ip = Ip::new("1.1.1.1");
+        assert_eq!("foo.bar.invalid", a.solve(&ip).name);
+    }
+}
