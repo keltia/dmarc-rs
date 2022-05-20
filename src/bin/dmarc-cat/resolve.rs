@@ -166,11 +166,11 @@ fn queue(ipl: &IpList) -> Result<Receiver<Ip>> {
     let (tx, rx) = channel();
 
     // construct a copy of the list
-    //let all: Vec<Ip> = ipl.l.clone();
+    let all = ipl.clone();
 
     // use that copy to send over
     thread::spawn(move || {
-        for ip in ipl.into_iter() {
+        for ip in all.into_iter() {
             tx.send(ip.clone()).expect("can not queue")
         }
     });
