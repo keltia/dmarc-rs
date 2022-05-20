@@ -80,7 +80,7 @@ use threadpool::ThreadPool;
 /// let ptr2 = resolve(l, num_cpus::get(), res).unwrap();
 /// ```
 ///
-pub fn resolve(ipl: IpList, njobs: usize, res: &Solver) -> Result<IpList> {
+pub fn resolve(ipl: &IpList, njobs: usize, res: &Solver) -> Result<IpList> {
     let max_threads = num_cpus::get();
 
     // Put a hard limit on how many parallel thread to the max number of cores (incl.
@@ -145,7 +145,7 @@ fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
 /// let ptr = parallel_solve(l, 4, r);
 /// ```
 ///
-fn parallel_solve(ipl: IpList, njobs: usize, res: &Solver) -> IpList {
+fn parallel_solve(ipl: &IpList, njobs: usize, res: &Solver) -> IpList {
     let mut full = IpList::new();
     let s = ipl.len();
 
@@ -162,7 +162,7 @@ fn parallel_solve(ipl: IpList, njobs: usize, res: &Solver) -> IpList {
 
 /// Take all values from the list and send them into a queue+
 ///
-fn queue(ipl: IpList) -> Result<Receiver<Ip>> {
+fn queue(ipl: &IpList) -> Result<Receiver<Ip>> {
     let (tx, rx) = channel();
 
     // construct a copy of the list
@@ -225,7 +225,7 @@ mod tests {
         let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
         let res = res_init(ResType::Fake);
 
-        assert!(resolve(l, 1000, &res).is_err())
+        assert!(resolve(&l, 1000, &res).is_err())
     }
 
     #[test]
@@ -234,10 +234,10 @@ mod tests {
         let res = res_init(ResType::Fake);
 
         // Using the simple single threaded solver.
-        let ptr = resolve(l, 1, &res).unwrap();
+        let ptr = resolve(&l, 1, &res).unwrap();
 
         // Use the parallel solver with 4 threads.
-        let ptr2 = resolve(l, num_cpus::get(), &res).unwrap();
+        let ptr2 = resolve(&l, num_cpus::get(), &res).unwrap();
 
         assert_eq!(ptr, ptr2);
     }
@@ -247,7 +247,7 @@ mod tests {
         let a = IpList::new();
         let res = res_init(ResType::Fake);
 
-        let r = parallel_solve(a, num_cpus::get_physical(), &res);
+        let r = parallel_solve(&a, num_cpus::get_physical(), &res);
 
         assert!(r.is_empty())
     }
@@ -267,7 +267,7 @@ mod tests {
         let a = IpList::new();
         let res = res_init(ResType::Fake);
 
-        let r = resolve(a, 1, &res);
+        let r = resolve(&a, 1, &res);
 
         assert!(r.is_err());
         assert!(r.unwrap().is_empty());
@@ -291,7 +291,7 @@ mod tests {
         let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
         let res = res_init(ResType::Fake);
 
-        let ptr = parallel_solve(l, num_cpus::get_physical(), &res);
+        let ptr = parallel_solve(&l, num_cpus::get_physical(), &res);
 
         assert_eq!(l.len(), ptr.len());
         // Order is not always preserved so check inside
@@ -310,7 +310,7 @@ mod tests {
         let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
         let res = res_init(ResType::Fake);
 
-        let r = resolve(l, 1, &res);
+        let r = resolve(&l, 1, &res);
         assert!(r.is_ok());
         assert_eq!(l, r.unwrap());
     }
