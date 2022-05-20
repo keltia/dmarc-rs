@@ -26,6 +26,7 @@
 // Std Library
 //
 use std::fmt::{Debug, Formatter};
+use std::net::IpAddr;
 use std::sync::Arc;
 
 // Our crates
@@ -35,7 +36,15 @@ use crate::iplist::IpList;
 
 // External crates
 //
+#[cfg(not(test))]
 use dns_lookup::lookup_addr;
+
+// When testing, hide the external function to put our own.
+// It has to be here and not inside `mod tests` in order to properly shadow the real one.
+#[cfg(test)]
+fn lookup_addr(_ip: &IpAddr) -> anyhow::Result<String> {
+    Ok("foo.bar.invalid".to_string())
+}
 
 /// This trait will allow us to override the resolving function during tests & at run-time.
 /// It defines a single function that basically get the PTR value from an IP address.  It takes an
