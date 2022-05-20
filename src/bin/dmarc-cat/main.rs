@@ -54,6 +54,7 @@
 pub mod analyze;
 pub mod cli;
 pub mod file;
+pub mod resolve;
 pub mod version;
 
 // Std library
@@ -62,14 +63,15 @@ pub mod version;
 // Our crates
 //
 use cli::Opts;
-use crate::file::{check_for_files, scan_list};
 use dmarc_rs::filetype::*;
+use file::{check_for_files, scan_list};
 use version::version;
 
 // External crates
 //
 use anyhow::{anyhow, Result};
 use clap::Parser;
+use dmarc_rs::resolver::{res_init, ResType};
 
 /// Main entry point
 ///
@@ -84,6 +86,13 @@ fn main() -> Result<()> {
 
     let mut flist = opts.files.to_owned();
     let mut ftype = Input::Plain;
+
+    // Handle --no-resolv flag
+    //
+    let mut res = res_init(ResType::Real);
+    if opts.noresolve {
+        res = res_init(ResType::Null);
+    }
 
     // If no arguments, we assume stdin and we enforece the presence of `-t`.
     //
@@ -105,7 +114,7 @@ fn main() -> Result<()> {
     //
     let flist = check_for_files(&flist);
     if flist.is_empty() {
-        return Err(anyhow!("No valid files"))
+        return Err(anyhow!("No valid files"));
     }
 
     // Do the thing.

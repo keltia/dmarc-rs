@@ -1,34 +1,7 @@
-//! Module defining the list of IP address we get from the XML file and operations
+//! Module defining the list of IP address we get from the XML file
 //!
-//! We define a list of IP tuples from the `dmarc_rs::ip` crate and implement two methods
-//! for resolving the IP into names.  One is `simple_solve()` which is a straightforward sequential
-//! solver, the other one is `parallel_solve()` which is using threads from a pool to implement a
-//! worker-based fan-out/fan-in scheme with channels to move data around.
-//!
-//! Examples:
-//! ```rust
-//! # use dmarc_rs::iplist::IpList;
-//! let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-//!
-//! // Use the simple solver
-//! let ptr = l.simple_solve();
-//! dbg!(&ptr);
-//! ```
-//! and with the parallel solver:
-//! ```rust
-//! # use dmarc_rs::iplist::IpList;
-//! // Get the number of physical cores, I prefer to use this one instead of the potentially
-//! // larger total cores because Hyperthreading has some overhead.
-//! let njobs = num_cpus::get_physical();
-//! let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-//!
-//! // Use the parallel solver
-//! let ptr = l.parallel_solve(njobs);
-//! dbg!(&ptr);
-//! ```
-//!
-//! BUGS: this version only handle one name per IP (whatever is returned by `lookup_addr()`.
-//!
+//! **NOTE**  all the resolving part has been removed from that part due to issues
+//! with implementing support for multiple resolvers (useful for testing).
 
 // Our crates
 //
@@ -36,25 +9,23 @@ use crate::ip::Ip;
 
 // Std library
 //
-use std::error::Error;
 use std::ops::{Index, IndexMut};
-use std::sync::mpsc::{channel, Receiver};
-use std::thread;
 
 // External crates
 //
-use anyhow::Result;
-use threadpool::ThreadPool;
 
 /// List of IP tuples.
 ///
 /// This is a wrapper type instead of an alias, it is easier to add stuff into it.  The inner list
-/// is not accessible except through our methods.
+/// is accessible through `.0`.
 ///
 /// We define the usual set of methods to facilitate initialisation and handling of the inner
 /// list of `Ip` inside.
 ///
-#[derive(Debug, Eq, PartialOrd, Ord, PartialEq)]
+/// We also define a large set of operations over `IpList` in order to facilitate manipulation
+/// with iterators, creating from iterators, sorting, indexed access, etc.
+///
+#[derive(Clone, Debug, Eq, PartialOrd, Ord, PartialEq)]
 pub struct IpList(Vec<Ip>);
 
 /// Implement the Default Trait.
@@ -78,74 +49,6 @@ impl IpList {
     #[inline]
     pub fn new() -> Self {
         IpList(vec![])
-    }
-
-    /// Convert a list of IP into names with multiple threads
-    ///
-    /// It uses a function to fillin the input channel then fan_out/fan_in to fill the result
-    /// list.
-    ///
-    /// Example:
-    /// ```no_run
-    /// # use dmarc_rs::ip::Ip;
-    /// # use dmarc_rs::iplist::IpList;
-    /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-    ///
-    /// let ptr = l.parallel_solve(4);
-    /// ```
-    ///
-    pub fn parallel_solve(&self, njobs: usize) -> IpList {
-        let mut full = IpList::new();
-        let s = self.len();
-
-        let pool = ThreadPool::new(njobs);
-        let rx_gen = self.queue().unwrap();
-        let rx_out = fan_out(rx_gen, pool, s).unwrap();
-        for ip in fan_in(rx_out).unwrap() {
-            full.push(ip);
-        }
-        full.0.sort();
-        dbg!(&full);
-        full
-    }
-
-    /// Take all values from the list and send them into a queue
-    ///
-    fn queue(&self) -> Result<Receiver<Ip>> {
-        let (tx, rx) = channel();
-
-        // construct a copy of the list
-        let all: Vec<Ip> = self.0.clone();
-
-        // use that copy to send over
-        thread::spawn(move || {
-            for ip in all.iter() {
-                tx.send(ip.clone()).expect("can not queue")
-            }
-        });
-        Ok(rx)
-    }
-
-    /// Simple and straightforward sequential solver
-    ///
-    /// Example:
-    /// ```
-    /// # use dmarc_rs::iplist::IpList;
-    /// # use dmarc_rs::ip::Ip;
-    /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-    ///
-    /// let ptr = l.simple_solve();
-    /// ```
-    ///
-    pub fn simple_solve(&self) -> Self {
-        let mut r = IpList::new();
-
-        for ip in self.0.iter() {
-            let ip = ip.solve();
-            r.push(ip.clone());
-        }
-        r.0.sort();
-        r
     }
 
     /// Helper fn to add IP to a list
@@ -193,9 +96,34 @@ impl IpList {
     pub fn is_empty(&self) -> bool {
         self.0.is_empty()
     }
+
+    /// Implement `sort()` directly on `IpList`
+    ///
+    /// Example:
+    /// ```
+    /// # use dmarc_rs::iplist::IpList;
+    /// let mut ipl = IpList::from(["224.0.0.1", "1.0.0.1", "2.3.4.5", "1.1.1.1", "192.0.2.1"]);
+    ///
+    /// println!("{:?}", ipl.sort());
+    /// ```
+    ///
+    #[inline]
+    pub fn sort(&mut self) {
+        self.0.sort();
+    }
 }
 
 /// Implement `IntoIterator` for `IpList` by calling the inner `into_iter()`.
+///
+/// Example:
+/// ```
+/// # use dmarc_rs::ip::Ip;
+/// use dmarc_rs::iplist::IpList;
+/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111"]);
+///
+/// let s: IpList = l.into_iter().map(|ip| Ip::new("0.0.0.0")).collect();
+/// assert_eq!(2, s.len());
+/// ```
 ///
 impl IntoIterator for IpList {
     type Item = Ip;
@@ -247,6 +175,14 @@ impl<const N: usize> From<[&str; N]> for IpList {
     }
 }
 
+impl From<Ip> for IpList {
+    /// Create an `IpList` from a single `Ip`.
+    ///
+    fn from(ip: Ip) -> Self {
+        Self(vec![ip])
+    }
+}
+
 /// Actual implementation of `IpList::from_iter` for an array of `&str`
 ///
 impl<'a> FromIterator<&'a str> for IpList {
@@ -282,11 +218,36 @@ impl<'a> FromIterator<(&'a str, &'a str)> for IpList {
     /// ]);
     /// ```
     ///
+    #[inline]
     fn from_iter<T: IntoIterator<Item = (&'a str, &'a str)>>(iter: T) -> Self {
         let mut ipl = IpList::new();
 
         for (ip, name) in iter {
             ipl.push(Ip::from((ip, name)))
+        }
+        ipl
+    }
+}
+
+/// Actual implementation of `IpList::from_iter` for an array of `Ip`, enabling `collect()` support
+///
+impl FromIterator<Ip> for IpList {
+    /// Example:
+    /// ```
+    /// # use dmarc_rs::ip::Ip;
+    /// # use dmarc_rs::iplist::IpList;
+    /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111"]);
+    ///
+    /// let s: IpList = l.into_iter().map(|_| Ip::new("0.0.0.0")).collect();
+    /// assert_eq!(2, s.len());
+    /// assert_eq!("0.0.0.0".to_string(), s[0].ip.to_string());
+    /// ```
+    ///
+    #[inline]
+    fn from_iter<I: IntoIterator<Item = Ip>>(iter: I) -> Self {
+        let mut ipl = IpList::new();
+        for ip in iter {
+            ipl.push(ip);
         }
         ipl
     }
@@ -329,40 +290,6 @@ impl IndexMut<usize> for IpList {
     }
 }
 
-// ----- Private functions.
-
-/// Start enough workers to resolve IP into PTR.
-///
-fn fan_out(
-    rx_gen: Receiver<Ip>,
-    pool: ThreadPool,
-    njobs: usize,
-) -> Result<Receiver<Ip>, Box<dyn Error>> {
-    let (tx, rx) = channel();
-
-    for _ in 0..njobs {
-        let tx = tx.clone();
-        let n = rx_gen.recv().unwrap();
-        pool.execute(move || {
-            let r = n.solve();
-            tx.send(r).expect("waiting channel");
-        });
-    }
-    Ok(rx)
-}
-
-/// Gather all results into an output channel
-///
-fn fan_in(rx_out: Receiver<Ip>) -> Result<Receiver<Ip>, Box<dyn Error>> {
-    let (tx, rx) = channel();
-    thread::spawn(move || {
-        for ip in rx_out.iter() {
-            tx.send(ip).expect("can not send");
-        }
-    });
-    Ok(rx)
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -401,59 +328,21 @@ mod tests {
     }
 
     #[test]
-    fn test_parallel_solve_empty() {
-        let a = IpList::new();
+    fn test_from_ip() {
+        let ip = Ip::new("1.0.0.1");
+        let ipl = IpList::from(ip);
+        let r = IpList(vec![Ip::new("1.0.0.1")]);
 
-        let r = a.parallel_solve(num_cpus::get_physical());
-        assert!(r.0.is_empty())
-    }
-
-    #[test]
-    fn test_simple_solve_empty() {
-        let a = IpList::new();
-        let r = a.simple_solve();
-
-        assert!(r.0.is_empty())
-    }
-
-    #[test]
-    fn test_simple_solve_ok() {
-        let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-
-        let ptr = l.simple_solve();
-
-        assert_eq!(l.len(), ptr.len());
-        assert_eq!("one.one.one.one", ptr[0].name.to_string());
-        assert_eq!("some.host.invalid", ptr[1].name.to_string());
-        assert_eq!("one.one.one.one", ptr[2].name.to_string());
-    }
-
-    #[test]
-    fn test_parallel_solve_ok() {
-        let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-
-        let ptr = l.parallel_solve(num_cpus::get_physical());
-
-        assert_eq!(l.len(), ptr.len());
-        // Order is not always preserved so check inside
-        //
-        for x in ptr {
-            if x.ip.to_string() == "192.0.2.1" {
-                assert_eq!("some.host.invalid", x.name);
-            } else {
-                assert_eq!("one.one.one.one", x.name);
-            }
-        }
+        assert_eq!(r, ipl);
     }
 
     #[test]
     fn test_from_array_str() {
-        let l = IpList(
-            vec![
-                Ip::new("1.1.1.1"),
-                Ip::new("2606:4700:4700::1111"),
-                Ip::new("192.0.2.1"),
-            ]);
+        let l = IpList(vec![
+            Ip::new("1.1.1.1"),
+            Ip::new("2606:4700:4700::1111"),
+            Ip::new("192.0.2.1"),
+        ]);
 
         let l2 = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 
@@ -464,22 +353,20 @@ mod tests {
     fn test_from_array_tuples() {
         use std::net::IpAddr;
 
-        let l = IpList(
-            vec![
-                Ip {
-                    ip: "1.1.1.1".parse::<IpAddr>().unwrap(),
-                    name: "one.one.one.one".into(),
-                },
-                Ip {
-                    ip: "2606:4700:4700::1111".parse::<IpAddr>().unwrap(),
-                    name: "one.one.one.one".into(),
-                },
-                Ip {
-                    ip: "192.0.2.1".parse::<IpAddr>().unwrap(),
-                    name: "some.host.invalid".into(),
-                },
-            ],
-        );
+        let l = IpList(vec![
+            Ip {
+                ip: "1.1.1.1".parse::<IpAddr>().unwrap(),
+                name: "one.one.one.one".into(),
+            },
+            Ip {
+                ip: "2606:4700:4700::1111".parse::<IpAddr>().unwrap(),
+                name: "one.one.one.one".into(),
+            },
+            Ip {
+                ip: "192.0.2.1".parse::<IpAddr>().unwrap(),
+                name: "some.host.invalid".into(),
+            },
+        ]);
         let l2 = IpList::from([
             ("1.1.1.1", "one.one.one.one"),
             ("2606:4700:4700::1111", "one.one.one.one"),
@@ -487,6 +374,23 @@ mod tests {
         ]);
 
         assert_eq!(l, l2);
+    }
+
+    #[test]
+    fn test_collect() {
+        let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+
+        let s: IpList = l.into_iter().map(|ip| ip.clone()).collect();
+        assert_eq!(3, s.len());
+    }
+
+    #[test]
+    fn test_collect_mut() {
+        let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111"]);
+
+        let s: IpList = l.into_iter().map(|_| Ip::new("0.0.0.0")).collect();
+        assert_eq!(2, s.len());
+        assert_eq!("0.0.0.0".to_string(), s[0].ip.to_string());
     }
 
     #[test]
@@ -529,5 +433,22 @@ mod tests {
         }
         assert_eq!(r, ips);
         dbg!(&ips);
+    }
+
+    #[test]
+    fn test_sort() {
+        let mut ipl = IpList::from(["224.0.0.1", "1.0.0.1", "2.3.4.5", "1.1.1.1", "192.0.2.1"]);
+        let s = IpList::from(["1.0.0.1", "1.1.1.1", "2.3.4.5", "192.0.2.1", "224.0.0.1"]);
+
+        ipl.sort();
+        assert_eq!(s, ipl);
+    }
+
+    #[test]
+    fn test_clone() {
+        let ipl = IpList::from(["224.0.0.1", "1.0.0.1", "2.3.4.5", "1.1.1.1", "192.0.2.1"]);
+        let r = ipl.clone();
+
+        assert_eq!(ipl, r);
     }
 }
