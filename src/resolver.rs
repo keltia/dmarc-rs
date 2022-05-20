@@ -4,7 +4,7 @@
 //! It uses the mechanism known as [dependency injection][dep-inj].
 //!
 //! The trait is encapsulated into a new type to avoid exposing internal details of the
-//! implementation as describe in [this article][jmmv].
+//! implementation as described in [this article][jmmv].
 //!
 //! This system allows for both run-time selection of the resolving module and easier testing
 //! for any modules using this mechanism.
