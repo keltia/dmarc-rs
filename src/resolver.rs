@@ -105,7 +105,10 @@ impl Resolver for NullResolver {
     ///
     #[inline]
     fn solve(&self, ip: &Ip) -> Ip {
-        Ip { ip: ip.ip, name: ip.ip.to_string() }
+        Ip {
+            ip: ip.ip,
+            name: ip.ip.to_string(),
+        }
     }
 }
 

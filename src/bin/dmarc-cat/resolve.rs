@@ -93,7 +93,7 @@ pub fn resolve(ipl: &IpList, njobs: usize, res: &Solver) -> Result<IpList> {
     // Bypass the more complex code is IpList has only one element
     if ipl.len() == 1 {
         let ip = res.solve(&ipl[0]);
-        return Ok(IpList::from(ip))
+        return Ok(IpList::from(ip));
     }
 
     // Call the appropriate one
@@ -119,11 +119,7 @@ pub fn resolve(ipl: &IpList, njobs: usize, res: &Solver) -> Result<IpList> {
 /// ```
 ///
 fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
-    let mut r: IpList = ipl
-        .clone()
-        .into_iter()
-        .map(|ip| res.solve(&ip))
-        .collect();
+    let mut r: IpList = ipl.clone().into_iter().map(|ip| res.solve(&ip)).collect();
     r.sort();
     r
 }
@@ -198,7 +194,7 @@ fn fan_out(
                 ip: name.ip,
                 name: name.name,
             })
-                .expect("waiting channel");
+            .expect("waiting channel");
         });
     }
     Ok(rx)

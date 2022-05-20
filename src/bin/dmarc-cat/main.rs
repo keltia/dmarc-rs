@@ -62,9 +62,9 @@ pub mod version;
 
 // Our crates
 //
-use file::{check_for_files, scan_list};
 use cli::Opts;
 use dmarc_rs::filetype::*;
+use file::{check_for_files, scan_list};
 use version::version;
 
 // External crates

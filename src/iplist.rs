@@ -331,9 +331,7 @@ mod tests {
     fn test_from_ip() {
         let ip = Ip::new("1.0.0.1");
         let ipl = IpList::from(ip);
-        let r = IpList(vec![
-            Ip::new("1.0.0.1"),
-        ]);
+        let r = IpList(vec![Ip::new("1.0.0.1")]);
 
         assert_eq!(r, ipl);
     }
