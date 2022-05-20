@@ -284,9 +284,9 @@ mod tests {
         let ptr = simple_solve(&l, &res);
 
         assert_eq!(l.len(), ptr.len());
-        assert_eq!("one.one.one.one", ptr[0].name.to_string());
-        assert_eq!("some.host.invalid", ptr[1].name.to_string());
-        assert_eq!("one.one.one.one", ptr[2].name.to_string());
+        for x in ptr {
+            assert_eq!("some.host.invalid", x.name);
+        }
     }
 
     #[test]
