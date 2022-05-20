@@ -205,6 +205,7 @@ impl Debug for RealResolver {
 /// // ==> should print "one.one.one.one"
 /// ```
 ///
+#[inline]
 pub fn res_init(t: ResType) -> Solver {
     match t {
         ResType::Null => Solver(Arc::from(NullResolver::init())),
