@@ -26,7 +26,7 @@
 //! let res = res_init(ResType::Real);
 //!
 //! // Use the simple solver
-//! let ptr = resolve(l, 1, &res);
+//! let ptr = resolve(&l, 1, &res);
 //! dbg!(&ptr);
 //! ```
 //! and with the parallel solver but with the default resolver:
@@ -41,7 +41,7 @@
 //! let res = res_init(ResType::default());
 //!
 //! // Use the parallel solver
-//! let ptr = parallel_solve(l, njobs, res);
+//! let ptr = parallel_solve(&l, njobs, res);
 //! dbg!(&ptr);
 //! ```
 //!
