@@ -32,7 +32,6 @@ use std::sync::Arc;
 // Our crates
 //
 use crate::ip::Ip;
-use crate::iplist::IpList;
 
 // External crates
 //
