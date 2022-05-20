@@ -305,12 +305,16 @@ mod tests {
     }
 
     #[test]
-    fn test_dumbsolver_solve() {
+    fn test_fakesolver_resolve() {
         let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
         let res = res_init(ResType::Fake);
 
-        let r = resolve(&l, 1, &res);
-        assert!(r.is_ok());
-        assert_eq!(l, r.unwrap());
+        let ptr = resolve(&l, 1, &res);
+        assert!(ptr.is_ok());
+
+        let ptr = ptr.unwrap();
+        for x in ptr {
+            assert_eq!("some.host.invalid", x.name);
+        }
     }
 }
