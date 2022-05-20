@@ -300,11 +300,7 @@ mod tests {
         // Order is not always preserved so check inside
         //
         for x in ptr {
-            if x.ip.to_string() == "192.0.2.1" {
-                assert_eq!("some.host.invalid", x.name);
-            } else {
-                assert_eq!("one.one.one.one", x.name);
-            }
+            assert_eq!("some.host.invalid", x.name);
         }
     }
 
