@@ -126,23 +126,14 @@ impl Debug for NullResolver {
 
 /// This is the Fake resolver, for the moment it returns `some.host.invalid`  for all IP.
 ///
-pub struct FakeResolver(IpList);
+pub struct FakeResolver();
 
 impl FakeResolver {
-    /// Returns one instance
+    /// Returns one instance.
     ///
     #[inline]
     pub(crate) fn init() -> Self {
-        FakeResolver(IpList::new())
-    }
-
-    #[inline]
-    pub fn load(&self, ipl: IpList) -> Self {
-        let mut r = FakeResolver::init();
-        for ip in ipl.into_iter() {
-            r.0.push(ip)
-        }
-        r
+        FakeResolver {}
     }
 }
 
@@ -224,12 +215,17 @@ pub fn res_init(t: ResType) -> Solver {
 
 #[cfg(test)]
 mod tests {
-    use std::any::{Any, TypeId};
     use super::*;
+    use std::any::{Any, TypeId};
 
-    #[test]
-    fn test_res_init() {
-        let a = res_init(ResType::Null);
+    use rstest::rstest;
+
+    #[rstest]
+    #[case(ResType::Fake)]
+    #[case(ResType::Null)]
+    #[case(ResType::Real)]
+    fn test_res_init(#[case] t: ResType) {
+        let a = res_init(t);
 
         assert_eq!(TypeId::of::<Solver>(), a.type_id());
     }
