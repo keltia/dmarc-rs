@@ -245,4 +245,12 @@ mod tests {
         let ip = Ip::new("1.1.1.1");
         assert_eq!("foo.bar.invalid", a.solve(&ip).name);
     }
+
+    #[test]
+    fn test_fake_solve() {
+        let ipl = IpList::from([("1.1.1.1", "")]);
+        let res = res_init(ResType::Fake);
+
+        assert_eq!("some.host.invalid", res.solve(&ipl[0]).name);
+    }
 }
