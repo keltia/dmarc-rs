@@ -86,7 +86,7 @@ pub fn resolve(ipl: &IpList, njobs: usize, res: &Solver) -> Result<IpList> {
     // Return an error on empty list
     // XXX maybe return the empty list?
     if ipl.is_empty() {
-        return Err(anyhow!(("Empty list")));
+        return Err(anyhow!("Empty list"));
     }
 
     // Put a hard limit on how many parallel thread to the max number of cores (incl.
