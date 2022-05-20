@@ -160,7 +160,7 @@ fn parallel_solve(ipl: &IpList, njobs: usize, res: &Solver) -> IpList {
     full
 }
 
-/// Take all values from the list and send them into a queue+
+/// Take all values from the list and send them into a queue
 ///
 fn queue(ipl: &IpList) -> Result<Receiver<Ip>> {
     let (tx, rx) = channel();
