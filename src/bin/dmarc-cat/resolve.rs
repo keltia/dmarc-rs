@@ -90,6 +90,12 @@ pub fn resolve(ipl: IpList, njobs: usize, res: &Solver) -> Result<IpList> {
         return Err(anyhow!("Too many threads"));
     }
 
+    // Bypass the more complex code is IpList has only one element
+    if ipl.len() == 1 {
+        let ip = res.solve(&ipl[0]);
+        return Ok(IpList::from(ip))
+    }
+
     // Call the appropriate one
     //
     match njobs {
