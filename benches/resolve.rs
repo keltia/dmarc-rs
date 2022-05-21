@@ -15,8 +15,8 @@ use std::thread;
 
 // External crates
 //
-use anyhow::{anyhow, Result};
-use criterion::{black_box, criterion_group, criterion_main, Criterion};
+use anyhow::Result;
+use criterion::{criterion_group, criterion_main, Criterion};
 use threadpool::ThreadPool;
 
 /// **NOTE** the code is reimplemented here because a bench can not import from the binary, only
