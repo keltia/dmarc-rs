@@ -119,12 +119,6 @@ impl Resolver for NullResolver {
     }
 }
 
-impl Debug for NullResolver {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str("nullresolver")
-    }
-}
-
 /// This is the Fake resolver, for the moment it returns `some.host.invalid`  for all IP.
 ///
 pub struct FakeResolver();
@@ -150,12 +144,6 @@ impl Resolver for FakeResolver {
     }
 }
 
-impl Debug for FakeResolver {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str("fakeresolver with some.host.invalid")
-    }
-}
-
 /// This is the real resolver implementation that  resolve IP to hostnames with the system one.
 ///
 pub struct RealResolver;
@@ -178,12 +166,6 @@ impl Resolver for RealResolver {
             ip: ip.ip,
             name: lookup_addr(&ip.ip).unwrap(),
         }
-    }
-}
-
-impl Debug for RealResolver {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str("realresolver using lookup_addr")
     }
 }
 
