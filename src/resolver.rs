@@ -69,6 +69,7 @@ pub struct Solver(Arc<dyn Resolver + Send + Sync + 'static>);
 impl Solver {
     /// Calling the inner implementation of `solve()`
     ///
+    #[inline]
     pub fn solve(&self, ip: &Ip) -> Ip {
         self.0.solve(ip)
     }
