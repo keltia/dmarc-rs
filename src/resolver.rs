@@ -26,7 +26,6 @@
 // Std Library
 //
 use std::fmt::{Debug, Formatter};
-use std::net::IpAddr;
 use std::sync::Arc;
 
 // Our crates
@@ -37,6 +36,9 @@ use crate::ip::Ip;
 //
 #[cfg(not(test))]
 use dns_lookup::lookup_addr;
+
+#[cfg(test)]
+use std::net::IpAddr;
 
 // When testing, hide the external function to put our own.
 // It has to be here and not inside `mod tests` in order to properly shadow the real one.
