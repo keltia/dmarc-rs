@@ -26,7 +26,6 @@
 // Std Library
 //
 use std::fmt::{Debug, Formatter};
-use std::net::IpAddr;
 use std::sync::Arc;
 
 // Our crates
