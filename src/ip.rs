@@ -24,7 +24,16 @@ use std::net::IpAddr;
 
 // External crates
 //
+#[cfg(not(test))]
 use dns_lookup::lookup_addr;
+
+#[cfg(test)]
+use anyhow::Result;
+
+#[cfg(test)]
+fn lookup_addr(ip: &IpAddr) -> Result<String> {
+    Ok("fake.host.name".to_string())
+}
 
 /// Individual IP/name tuple
 #[derive(Clone, Debug, Eq, Ord, PartialOrd, PartialEq)]
@@ -142,13 +151,13 @@ mod tests {
     }
 
     #[rstest]
-    #[case("1.1.1.1", "one.one.one.one")]
-    #[case("2606:4700:4700::1111", "one.one.one.one")]
-    #[case("192.0.2.1", "some.host.invalid")]
-    fn test_ip_solve(#[case] s: &str, #[case] p: &str) {
+    #[case("1.1.1.1")]
+    #[case("2606:4700:4700::1111")]
+    #[case("192.0.2.1")]
+    fn test_ip_solve(#[case] s: &str) {
         let ptr = Ip::new(s).solve();
         assert_eq!(s.parse::<IpAddr>().unwrap(), ptr.ip);
-        assert_eq!(p.to_string(), ptr.name);
+        assert_eq!("fake.host.name", ptr.name);
     }
 
     #[test]
