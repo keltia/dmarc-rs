@@ -25,7 +25,6 @@
 
 // Std Library
 //
-use std::fmt::{Debug, Formatter};
 use std::sync::Arc;
 
 // Our crates
