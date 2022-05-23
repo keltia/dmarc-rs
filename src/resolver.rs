@@ -31,12 +31,14 @@ use std::sync::Arc;
 // Our crates
 //
 use crate::ip::Ip;
-use crate::iplist::IpList;
 
 // External crates
 //
 #[cfg(not(test))]
 use dns_lookup::lookup_addr;
+
+#[cfg(test)]
+use std::net::IpAddr;
 
 // When testing, hide the external function to put our own.
 // It has to be here and not inside `mod tests` in order to properly shadow the real one.
@@ -67,6 +69,7 @@ pub struct Solver(Arc<dyn Resolver + Send + Sync + 'static>);
 impl Solver {
     /// Calling the inner implementation of `solve()`
     ///
+    #[inline]
     pub fn solve(&self, ip: &Ip) -> Ip {
         self.0.solve(ip)
     }
@@ -117,12 +120,6 @@ impl Resolver for NullResolver {
     }
 }
 
-impl Debug for NullResolver {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str("nullresolver")
-    }
-}
-
 /// This is the Fake resolver, for the moment it returns `some.host.invalid`  for all IP.
 ///
 pub struct FakeResolver();
@@ -148,12 +145,6 @@ impl Resolver for FakeResolver {
     }
 }
 
-impl Debug for FakeResolver {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str("fakeresolver with some.host.invalid")
-    }
-}
-
 /// This is the real resolver implementation that  resolve IP to hostnames with the system one.
 ///
 pub struct RealResolver;
@@ -176,12 +167,6 @@ impl Resolver for RealResolver {
             ip: ip.ip,
             name: lookup_addr(&ip.ip).unwrap(),
         }
-    }
-}
-
-impl Debug for RealResolver {
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
-        f.write_str("realresolver using lookup_addr")
     }
 }
 
@@ -248,9 +233,9 @@ mod tests {
 
     #[test]
     fn test_fake_solve() {
-        let ipl = IpList::from([("1.1.1.1", "")]);
-        let res = res_init(ResType::Fake);
+        let a = res_init(ResType::Fake);
 
-        assert_eq!("some.host.invalid", res.solve(&ipl[0]).name);
+        let ip = Ip::new("1.1.1.1");
+        assert_eq!("some.host.invalid", a.solve(&ip).name);
     }
 }
