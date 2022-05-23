@@ -31,7 +31,7 @@ use dns_lookup::lookup_addr;
 use anyhow::Result;
 
 #[cfg(test)]
-fn lookup_addr(ip: &IpAddr) -> Result<String> {
+fn lookup_addr(_ip: &IpAddr) -> Result<String> {
     Ok("fake.host.name".to_string())
 }
 
