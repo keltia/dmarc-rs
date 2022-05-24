@@ -143,7 +143,7 @@ fn setup() -> IpList {
 }
 
 fn resolve_simple(c: &mut Criterion) {
-    let res = res_init(ResType::Null);
+    let res = res_init(ResType::Sleep);
 
     let ipl = setup();
     let mut r = IpList::new();
@@ -156,7 +156,7 @@ fn resolve_simple(c: &mut Criterion) {
 }
 
 fn resolve_parallel_1(c: &mut Criterion) {
-    let res = res_init(ResType::Null);
+    let res = res_init(ResType::Sleep);
 
     let ipl = setup();
     let mut r = IpList::new();
