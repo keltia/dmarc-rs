@@ -130,25 +130,11 @@ fn setup() -> IpList {
     ipl
 }
 
-fn resolve_simple(c: &mut Criterion) {
-    let res = res_init(ResType::Null);
-
-    let ipl = setup();
-    let mut r = IpList::new();
-
-    c.bench_function("simple_solve 100", |b| {
-        b.iter(|| r = simple_solve(&ipl, &res))
-    });
-
-    let _ = r;
-}
-
 fn resolve_parallel(c: &mut Criterion) {
-    let res = res_init(ResType::Null);
+    let res = res_init(ResType::Sleep);
 
     let ipl = setup();
     let r = IpList::new();
-    let size: usize = 100;
 
     c.bench_function("async parallel_solve 100", |b| {
         b.to_async(FuturesExecutor)
