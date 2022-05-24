@@ -166,7 +166,7 @@ impl Resolver for SleepResolver {
     ///
     #[inline]
     fn solve(&self, ip: &Ip) -> Ip {
-        sleep(Duration::from_secs_f32(0.2f32));
+        sleep(Duration::from_secs_f32(0.01f32));
         Ip {
             ip: ip.ip,
             name: "some.host.invalid".to_string(),
