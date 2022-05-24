@@ -37,7 +37,8 @@ use threadpool::ThreadPool;
 /// ```
 ///
 fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
-    let r: IpList = ipl.clone().into_iter().map(|ip| res.solve(&ip)).collect();
+    let mut r: IpList = ipl.clone().into_iter().map(|ip| res.solve(&ip)).collect();
+    r.sort();
     assert_eq!(ipl.len(), r.len());
     r
 }
@@ -69,7 +70,7 @@ fn parallel_solve(ipl: &IpList, workers: usize, res: &Solver) -> IpList {
     for ip in fan_in(rx_out).unwrap() {
         full.push(ip);
     }
-    //full.sort();
+    full.sort();
     assert_eq!(ipl.len(), full.len());
     full
 }
