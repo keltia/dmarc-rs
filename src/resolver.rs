@@ -38,6 +38,8 @@ use dns_lookup::lookup_addr;
 
 #[cfg(test)]
 use std::net::IpAddr;
+use std::thread::sleep;
+use std::time::Duration;
 
 // When testing, hide the external function to put our own.
 // It has to be here and not inside `mod tests` in order to properly shadow the real one.
@@ -84,6 +86,8 @@ pub enum ResType {
     Null,
     /// The real thing, encapsulating `lookup_addr()`
     Real,
+    /// Special one for bench
+    Sleep,
 }
 
 impl Default for ResType {
@@ -144,6 +148,32 @@ impl Resolver for FakeResolver {
     }
 }
 
+/// This is the Sleep resolver, for the moment it returns `some.host.invalid`  for all IP.
+///
+pub struct SleepResolver();
+
+impl SleepResolver {
+    /// Returns one instance.
+    ///
+    #[inline]
+    pub(crate) fn init() -> Self {
+        SleepResolver {}
+    }
+}
+
+impl Resolver for SleepResolver {
+    /// Implement the `Resolver` trait.
+    ///
+    #[inline]
+    fn solve(&self, ip: &Ip) -> Ip {
+        sleep(Duration::from_secs_f32(0.2f32));
+        Ip {
+            ip: ip.ip,
+            name: "some.host.invalid".to_string(),
+        }
+    }
+}
+
 /// This is the real resolver implementation that  resolve IP to hostnames with the system one.
 ///
 pub struct RealResolver;
@@ -194,6 +224,7 @@ pub fn res_init(t: ResType) -> Solver {
         ResType::Null => Solver(Arc::from(NullResolver::init())),
         ResType::Fake => Solver(Arc::from(FakeResolver::init())),
         ResType::Real => Solver(Arc::from(RealResolver::init())),
+        ResType::Sleep => Solver(Arc::from(SleepResolver::init())),
     }
 }
 
