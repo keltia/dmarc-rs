@@ -12,10 +12,6 @@
 [![SemVer](https://img.shields.io/badge/semver-2.0.0-blue)](https://semver.org/spec/v2.0.0.html)
 [![License](https://img.shields.io/crates/l/mit)](https://opensource.org/licenses/MIT)
 
-[dmarc-rs: 1.56+]: https://img.shields.io/badge/Rust%20version-1.56%2B-lightgrey
-[Rust 1.56]: https://blog.rust-lang.org/2021/10/21/Rust-1.56.0.html
-[Go]: https://golang.org/
-
 Licensed under the [MIT](LICENSE).
 
 1. [About](#about)
@@ -23,7 +19,8 @@ Licensed under the [MIT](LICENSE).
 3. [Usage](#usage)
 4. [Output format](#columns)
 5. [References](#references)
-6. [Contributing](#contributing)
+6. [MSRV](#msrv)
+7. [Contributing](#contributing)
 
 ## About
 
@@ -137,9 +134,13 @@ Tests are available as unit-tests for the library part and as integration tests 
 
 ## References
 
-- [DMARC](https://dmarc.org/)
-- [SPF](http://www.rfc-editor.org/info/rfc7208)
-- [DKIM](http://www.rfc-editor.org/info/rfc6376)
+- [DMARC]
+- [SPF]
+- [DKIM]
+
+## MSRV
+
+The Minimum Supported Rust Version is 1.56 due to the 2021 Edition. 
 
 ## Contributing
 
@@ -153,3 +154,10 @@ I use Git Flow for this package so please use something similar or the usual git
 4. Commit your changes (`git commit -am 'Add some feature'`)
 5. Push to the branch (`git push origin my-new-feature`)
 6. Create a new Pull Request
+
+[DMARC]: https://dmarc.org/
+[SPF]: http://www.rfc-editor.org/info/rfc7208
+[DKIM]: http://www.rfc-editor.org/info/rfc6376
+[dmarc-rs: 1.56+]: https://img.shields.io/badge/Rust%20version-1.56%2B-lightgrey
+[Rust 1.56]: https://blog.rust-lang.org/2021/10/21/Rust-1.56.0.html
+[Go]: https://golang.org/
