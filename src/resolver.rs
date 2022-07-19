@@ -30,11 +30,14 @@ use std::sync::Arc;
 // Our crates
 //
 use crate::ip::Ip;
+use crate::iplist::IpList;
 
 // External crates
 //
 #[cfg(not(test))]
 use dns_lookup::lookup_addr;
+
+use anyhow::{anyhow, Result};
 
 #[cfg(test)]
 use std::net::IpAddr;
@@ -46,6 +49,55 @@ use std::time::Duration;
 #[cfg(test)]
 fn lookup_addr(_ip: &IpAddr) -> anyhow::Result<String> {
     Ok("foo.bar.invalid".to_string())
+}
+
+/// `resolve()` is the main function call to get all names from the list of `Ip` we get from the
+/// XML file.
+///
+/// Example:
+/// ```no_run
+/// # use dmarc_rs::iplist::IpList;
+/// # use dmarc_rs::resolver::{res_init, resolve, ResType};
+/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+///
+/// // Select a resolver
+/// let res = res_init(ResType::Real);
+///
+/// // Using the simple single threaded solver.
+/// let ptr = resolve(&l, 1, &res).unwrap();
+///
+/// // Use the parallel solver with as many threads as the CPU has.
+/// let ptr2 = resolve(&l, num_cpus::get(), &res).unwrap();
+/// ```
+///
+pub fn resolve(ipl: &IpList, njobs: usize, res: &Solver) -> Result<IpList> {
+    let max_threads = num_cpus::get();
+
+    // Return an error on empty list
+    // XXX maybe return the empty list?
+    if ipl.is_empty() {
+        return Err(anyhow!("Empty list"));
+    }
+
+    // Put a hard limit on how many parallel thread to the max number of cores (incl.
+    // avoid overhead even on modern versions of Hyperthreading).
+    //
+    if njobs > max_threads {
+        return Err(anyhow!("Too many threads"));
+    }
+
+    // Bypass the more complex code is IpList has only one element
+    if ipl.len() == 1 {
+        let ip = res.solve(&ipl[0]);
+        return Ok(IpList::from(ip));
+    }
+
+    // Call the appropriate one
+    //
+    match njobs {
+        1 => Ok(simple_solve(&ipl, res)),
+        _ => Ok(parallel_solve(ipl, njobs, res)),
+    }
 }
 
 /// This trait will allow us to override the resolving function during tests & at run-time.

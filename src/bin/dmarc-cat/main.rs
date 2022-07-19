@@ -52,9 +52,9 @@
 // Internal crates
 //
 pub mod analyze;
+pub mod async_resolve;
 pub mod cli;
 pub mod file;
-pub mod resolve;
 pub mod version;
 
 // Std library
@@ -63,7 +63,11 @@ pub mod version;
 // Our crates
 //
 use cli::Opts;
+use resolve::{parallel_solve, simple_solve};
 use dmarc_rs::filetype::*;
+use dmarc_rs::ip::Ip;
+use dmarc_rs::iplist::IpList;
+use dmarc_rs::resolver::{res_init, ResType, Solver};
 use file::{check_for_files, scan_list};
 use version::version;
 
@@ -71,7 +75,6 @@ use version::version;
 //
 use anyhow::{anyhow, Result};
 use clap::Parser;
-use dmarc_rs::resolver::{res_init, ResType};
 
 /// Main entry point
 ///
