@@ -140,7 +140,13 @@ Tests are available as unit-tests for the library part and as integration tests 
 
 ## MSRV
 
-The Minimum Supported Rust Version is 1.56 due to the 2021 Edition. 
+The Minimum Supported Rust Version is 1.56 due to the 2021 Edition.
+
+## NOTE
+
+By default `dmarc-cat` use an async parallel resolver. If needed a sync resolver could be used (see the
+bench file `sync_resolve.rs`) but performance seems to be much better with async. One can always specify
+only 1 job anyway for the resolving process.
 
 ## Contributing
 
