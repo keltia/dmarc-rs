@@ -30,6 +30,7 @@ harness = false
 
 [dependencies]
 anyhow = "1.0"
+async-std = "1"
 clap = { version = "3.1", features = ["derive", "cargo"] }
 dns-lookup = "1.0"
 flate2 = "1.0"
@@ -44,7 +45,6 @@ zip = "0.6"
 
 [dev-dependencies]
 assert_cmd = "2.0"
-async-std = "1"
 criterion = { version = "0", features = [ "async_futures"] }
 fake = "2"
 rstest = "0.11"
