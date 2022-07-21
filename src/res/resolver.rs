@@ -317,6 +317,7 @@ mod tests {
     #[case(ResType::Fake)]
     #[case(ResType::Null)]
     #[case(ResType::Real)]
+    #[case(ResType::Sleep)]
     fn test_res_init(#[case] t: ResType) {
         let a = res_init(t);
 
@@ -342,6 +343,14 @@ mod tests {
     #[test]
     fn test_fake_solve() {
         let a = res_init(ResType::Fake);
+
+        let ip = Ip::new("1.1.1.1");
+        assert_eq!("some.host.invalid", a.solve(&ip).name);
+    }
+
+    #[test]
+    fn test_sleep_solve() {
+        let a = res_init(ResType::Sleep);
 
         let ip = Ip::new("1.1.1.1");
         assert_eq!("some.host.invalid", a.solve(&ip).name);
