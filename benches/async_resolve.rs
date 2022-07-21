@@ -1,8 +1,8 @@
 // Also look in Cargo.toml how to use a benchmark setup with harness = false
 // Async version of the parallel_resolve() function.
 
-use dmarc_rs::ip::Ip;
-use dmarc_rs::iplist::IpList;
+use dmarc_rs::res::Ip;
+use dmarc_rs::res::IpList;
 use dmarc_rs::resolver::*;
 
 // Std library
@@ -28,8 +28,8 @@ pub type Error = Box<(dyn std::error::Error + Send + Sync + 'static)>;
 ///
 /// Example:
 /// ```no_run
-/// # use dmarc_rs::ip::Ip;
-/// # use dmarc_rs::iplist::IpList;
+/// # use dmarc_rs::res::Ip;
+/// # use dmarc_rs::res::IpList;
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// // Select a resolver

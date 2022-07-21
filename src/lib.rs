@@ -3,7 +3,5 @@
 
 pub mod entry;
 pub mod filetype;
-pub mod ip;
-pub mod iplist;
-pub mod resolver;
+pub mod res;
 pub mod types;

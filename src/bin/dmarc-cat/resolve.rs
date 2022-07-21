@@ -3,8 +3,8 @@
 
 // Our crates
 //
-use dmarc_rs::ip::Ip;
-use dmarc_rs::iplist::IpList;
+use dmarc_rs::res::Ip;
+use dmarc_rs::res::IpList;
 use dmarc_rs::resolver::*;
 
 // Std library
@@ -17,26 +17,6 @@ use std::thread;
 use anyhow::{anyhow, Result};
 use threadpool::ThreadPool;
 
-/// Simple and straightforward sequential solver
-///
-/// Example:
-/// ```
-/// # use dmarc_rs::iplist::IpList;
-/// # use dmarc_rs::ip::Ip;
-/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-///
-/// // select a given resolver
-/// let res = res_init(ResType::Real);
-///
-/// let ptr = simple_solve(l, res);
-/// ```
-///
-pub fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
-    let mut r: IpList = ipl.clone().into_iter().map(|ip| res.solve(&ip)).collect();
-    r.sort();
-    r
-}
-
 /// Convert a list of IP into names with multiple threads
 ///
 /// It uses a function to fill in the input channel then fan_out/fan_in to fill the result
@@ -44,8 +24,8 @@ pub fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
 ///
 /// Example:
 /// ```no_run
-/// # use dmarc_rs::ip::Ip;
-/// # use dmarc_rs::iplist::IpList;
+/// # use dmarc_rs::res::Ip;
+/// # use dmarc_rs::res::IpList;
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// // Select a resolver
@@ -127,8 +107,8 @@ fn fan_in(rx_out: Receiver<Ip>) -> Result<Receiver<Ip>, Box<dyn std::error::Erro
 
 #[cfg(test)]
 mod tests {
-    use crate::resolve;
     use super::*;
+    use crate::resolve;
 
     #[test]
     fn test_invalid_jobs() {

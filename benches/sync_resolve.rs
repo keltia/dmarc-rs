@@ -3,8 +3,8 @@
 //! Please run with `cargo bench`.
 //!
 
-use dmarc_rs::ip::Ip;
-use dmarc_rs::iplist::IpList;
+use dmarc_rs::res::Ip;
+use dmarc_rs::res::IpList;
 use dmarc_rs::resolver::*;
 
 // Std library
@@ -26,8 +26,8 @@ use threadpool::ThreadPool;
 ///
 /// Example:
 /// ```
-/// # use dmarc_rs::iplist::IpList;
-/// # use dmarc_rs::ip::Ip;
+/// # use dmarc_rs::res::IpList;
+/// # use dmarc_rs::res::Ip;
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// // select a given resolver
@@ -50,8 +50,8 @@ fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
 ///
 /// Example:
 /// ```no_run
-/// # use dmarc_rs::ip::Ip;
-/// # use dmarc_rs::iplist::IpList;
+/// # use dmarc_rs::res::Ip;
+/// # use dmarc_rs::res::IpList;
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// // Select a resolver
