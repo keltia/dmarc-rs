@@ -21,8 +21,7 @@
 //!
 //! Examples:
 //! ```rust
-//! # use dmarc_rs::res::IpList;
-//! # use dmarc_rs::resolver::*;
+//! # use dmarc_rs::res::{IpList, res_init, resolve, ResType};
 //! let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 //! let res = res_init(ResType::Real);
 //!
@@ -32,8 +31,8 @@
 //! ```
 //! and with the parallel solver but with the default resolver:
 //! ```rust
-//! # use dmarc_rs::res::IpList;
-//! # use dmarc_rs::resolver::*;
+//! # use dmarc_rs::res::{IpList, res_init, ResType};
+//! # use dmarc_rs::res::ares::parallel_solve;
 //! // Get the number of physical cores, I prefer to use this one instead of the potentially
 //! // larger total cores because Hyperthreading has some overhead.
 //! let njobs = num_cpus::get_physical();
@@ -42,14 +41,14 @@
 //! let res = res_init(ResType::default());
 //!
 //! // Use the parallel solver
-//! let ptr = parallel_solve(&l, njobs, res);
+//! let ptr = parallel_solve(&l, njobs, &res);
 //! dbg!(&ptr);
 //! ```
 //!
 
 use crate::res::ip::Ip;
 use crate::res::iplist::IpList;
-use crate::res::resolver::*;
+use crate::res::Solver;
 
 // Std library
 //
@@ -70,10 +69,11 @@ pub type Error = Box<(dyn std::error::Error + Send + Sync + 'static)>;
 ///
 /// Example:
 /// ```no_run
-/// # use dmarc_rs::res::async::parallel_solve;
-/// use dmarc_rs::res::ip::Ip;
+/// # use dmarc_rs::res::ares::parallel_solve;
+/// # use dmarc_rs::res::ip::Ip;
 /// # use dmarc_rs::res::iplist::IpList;
-/// use dmarc_rs::res::resolver::{res_init, ResType};
+/// use dmarc_rs::res::{res_init, ResType};
+///
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// // Select a resolver
