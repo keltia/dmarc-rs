@@ -70,14 +70,16 @@ pub type Error = Box<(dyn std::error::Error + Send + Sync + 'static)>;
 ///
 /// Example:
 /// ```no_run
-/// # use dmarc_rs::res::ip::Ip;
+/// # use dmarc_rs::res::async::parallel_solve;
+/// use dmarc_rs::res::ip::Ip;
 /// # use dmarc_rs::res::iplist::IpList;
+/// use dmarc_rs::res::resolver::{res_init, ResType};
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// // Select a resolver
 /// let res = res_init(ResType::Null);
 ///
-/// let ptr = parallel_solve(l, 4, res);
+/// let ptr = parallel_solve(&l, 4, &res);
 /// ```
 ///
 pub async fn parallel_solve(
@@ -101,7 +103,7 @@ pub async fn parallel_solve(
 
 /// Take all values from the list and send them into a queue
 ///
-async fn queue(ipl: &IpList) -> Result<Receiver<Ip>, Error> {
+async fn queue(ipl: &IpList) -> Result<Receiver<Ip>, async_std::io::Error> {
     let (mut tx, rx) = channel(0);
 
     // construct a copy of the list
