@@ -21,7 +21,7 @@
 //!
 //! Examples:
 //! ```rust
-//! # use dmarc_rs::iplist::IpList;
+//! # use dmarc_rs::res::IpList;
 //! # use dmarc_rs::resolver::*;
 //! let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 //! let res = res_init(ResType::Real);
@@ -32,7 +32,7 @@
 //! ```
 //! and with the parallel solver but with the default resolver:
 //! ```rust
-//! # use dmarc_rs::iplist::IpList;
+//! # use dmarc_rs::res::IpList;
 //! # use dmarc_rs::resolver::*;
 //! // Get the number of physical cores, I prefer to use this one instead of the potentially
 //! // larger total cores because Hyperthreading has some overhead.
@@ -47,17 +47,15 @@
 //! ```
 //!
 
-use dmarc_rs::ip::Ip;
-use dmarc_rs::iplist::IpList;
-use dmarc_rs::resolver::*;
+use crate::res::ip::Ip;
+use crate::res::iplist::IpList;
+use crate::res::resolver::*;
 
 // Std library
 //
-use std::net::IpAddr;
 
 // External crates
 //
-use anyhow::Result;
 use async_std::task;
 use futures::channel::mpsc::{channel, Receiver};
 use futures::sink::SinkExt;
@@ -72,8 +70,8 @@ pub type Error = Box<(dyn std::error::Error + Send + Sync + 'static)>;
 ///
 /// Example:
 /// ```no_run
-/// # use dmarc_rs::ip::Ip;
-/// # use dmarc_rs::iplist::IpList;
+/// # use dmarc_rs::res::ip::Ip;
+/// # use dmarc_rs::res::iplist::IpList;
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// // Select a resolver
@@ -82,7 +80,11 @@ pub type Error = Box<(dyn std::error::Error + Send + Sync + 'static)>;
 /// let ptr = parallel_solve(l, 4, res);
 /// ```
 ///
-pub async fn parallel_solve(ipl: &IpList, _workers: usize, res: &Solver) -> Result<IpList, Error> {
+pub async fn parallel_solve(
+    ipl: &IpList,
+    _workers: usize,
+    res: &Solver,
+) -> Result<IpList, async_std::io::Error> {
     let mut full = IpList::new();
     let s = ipl.len();
 
@@ -120,7 +122,7 @@ async fn fan_out(
     mut rx_gen: Receiver<Ip>,
     njobs: usize,
     res: &Solver,
-) -> Result<Receiver<Ip>, Error> {
+) -> Result<Receiver<Ip>, async_std::io::Error> {
     let (tx, rx) = channel(njobs);
 
     let mut handles = Vec::new();
@@ -147,7 +149,7 @@ async fn fan_out(
 
 /// Gather all results into an output channel
 ///
-async fn fan_in(mut rx_fan_out: Receiver<Ip>) -> Result<Receiver<Ip>> {
+async fn fan_in(mut rx_fan_out: Receiver<Ip>) -> Result<Receiver<Ip>, async_std::io::Error> {
     let (mut tx, rx) = channel(0);
     task::spawn(async move {
         loop {

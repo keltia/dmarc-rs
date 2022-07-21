@@ -5,7 +5,7 @@
 
 // Our crates
 //
-use crate::ip::Ip;
+use crate::res::ip::Ip;
 
 // Std library
 //
@@ -41,7 +41,7 @@ impl IpList {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::iplist::IpList;
+    /// # use dmarc_rs::res::IpList;
     /// let l = IpList::new();
     /// assert!(l.is_empty());
     /// ```
@@ -55,8 +55,8 @@ impl IpList {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::ip::Ip;
-    /// # use dmarc_rs::iplist::IpList;
+    /// # use dmarc_rs::res::Ip;
+    /// # use dmarc_rs::res::IpList;
     /// let mut l = IpList::new();
     /// l.push(Ip::new("1.1.1.1"));
     /// ```
@@ -70,8 +70,8 @@ impl IpList {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::ip::Ip;
-    /// # use dmarc_rs::iplist::IpList;
+    /// # use dmarc_rs::res::Ip;
+    /// # use dmarc_rs::res::IpList;
     /// let mut l = IpList::new();
     /// l.push(Ip::new("1.1.1.1"));
     /// println!("length of l is {}", l.len())
@@ -86,7 +86,7 @@ impl IpList {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::iplist::IpList;
+    /// # use dmarc_rs::res::IpList;
     /// let ipl = IpList::from(["1.0.0.1", "1.1.1.1"]);
     ///
     /// assert!(!ipl.is_empty());
@@ -101,7 +101,7 @@ impl IpList {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::iplist::IpList;
+    /// # use dmarc_rs::res::IpList;
     /// let mut ipl = IpList::from(["224.0.0.1", "1.0.0.1", "2.3.4.5", "1.1.1.1", "192.0.2.1"]);
     ///
     /// println!("{:?}", ipl.sort());
@@ -117,8 +117,8 @@ impl IpList {
 ///
 /// Example:
 /// ```
-/// # use dmarc_rs::ip::Ip;
-/// use dmarc_rs::iplist::IpList;
+/// # use dmarc_rs::res::Ip;
+/// use dmarc_rs::res::IpList;
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111"]);
 ///
 /// let s: IpList = l.into_iter().map(|ip| Ip::new("0.0.0.0")).collect();
@@ -144,7 +144,7 @@ impl<const N: usize> From<[(&str, &str); N]> for IpList {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::iplist::IpList;
+    /// # use dmarc_rs::res::IpList;
     /// let l = IpList::from([("1.1.1.1", "one.one.one.one"), ("2606:4700:4700::1111", "one.one.one.one")]);
     ///
     /// assert_eq!(2, l.len());
@@ -163,7 +163,7 @@ impl<const N: usize> From<[&str; N]> for IpList {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::iplist::IpList;
+    /// # use dmarc_rs::res::IpList;
     /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
     ///
     /// assert_eq!(3, l.len());
@@ -189,8 +189,8 @@ impl<'a> FromIterator<&'a str> for IpList {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::ip::Ip;
-    /// # use dmarc_rs::iplist::IpList;
+    /// # use dmarc_rs::res::Ip;
+    /// # use dmarc_rs::res::IpList;
     /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
     /// ```
     ///
@@ -210,7 +210,7 @@ impl<'a> FromIterator<(&'a str, &'a str)> for IpList {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::iplist::IpList;
+    /// # use dmarc_rs::res::IpList;
     /// let l = IpList::from([
     ///     ("1.1.1.1", "one.one.one.one"),
     ///     ("2606:4700:4700::1111", "one.one.one.one"),
@@ -234,8 +234,8 @@ impl<'a> FromIterator<(&'a str, &'a str)> for IpList {
 impl FromIterator<Ip> for IpList {
     /// Example:
     /// ```
-    /// # use dmarc_rs::ip::Ip;
-    /// # use dmarc_rs::iplist::IpList;
+    /// # use dmarc_rs::res::Ip;
+    /// # use dmarc_rs::res::IpList;
     /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111"]);
     ///
     /// let s: IpList = l.into_iter().map(|_| Ip::new("0.0.0.0")).collect();
@@ -260,7 +260,7 @@ impl Index<usize> for IpList {
 
     /// Example:
     /// ```
-    /// # use dmarc_rs::iplist::IpList;
+    /// # use dmarc_rs::res::IpList;
     /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
     ///
     /// println!("{:?}", l[0]);
@@ -277,8 +277,8 @@ impl Index<usize> for IpList {
 impl IndexMut<usize> for IpList {
     /// Example:
     /// ```
-    /// # use dmarc_rs::ip::Ip;
-    /// use dmarc_rs::iplist::IpList;
+    /// # use dmarc_rs::res::Ip;
+    /// use dmarc_rs::res::IpList;
     /// let mut l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
     /// l[0] = Ip::new("9.9.9.9");
     /// println!("{:?}", l[0]);
@@ -293,7 +293,7 @@ impl IndexMut<usize> for IpList {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::ip::Ip;
+    use crate::res::Ip;
     use std::net::IpAddr;
 
     #[test]

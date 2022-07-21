@@ -29,15 +29,14 @@ use std::sync::Arc;
 
 // Our crates
 //
-use crate::ip::Ip;
-use crate::iplist::IpList;
+use crate::res::async_resolve::parallel_solve;
+use crate::res::ip::Ip;
+use crate::res::iplist::IpList;
 
 // External crates
 //
 #[cfg(not(test))]
 use dns_lookup::lookup_addr;
-
-use anyhow::{anyhow, Result};
 
 #[cfg(test)]
 use std::net::IpAddr;
@@ -56,8 +55,8 @@ fn lookup_addr(_ip: &IpAddr) -> anyhow::Result<String> {
 ///
 /// Example:
 /// ```no_run
-/// # use dmarc_rs::iplist::IpList;
-/// # use dmarc_rs::resolver::{res_init, resolve, ResType};
+/// # use dmarc_rs::res::iplist::IpList;
+/// # use dmarc_rs::res::resolver::{res_init, resolve, ResType};
 /// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// // Select a resolver
@@ -70,13 +69,17 @@ fn lookup_addr(_ip: &IpAddr) -> anyhow::Result<String> {
 /// let ptr2 = resolve(&l, num_cpus::get(), &res).unwrap();
 /// ```
 ///
-pub fn resolve(ipl: &IpList, njobs: usize, res: &Solver) -> Result<IpList> {
+pub async fn resolve(
+    ipl: &IpList,
+    njobs: usize,
+    res: &Solver,
+) -> Result<IpList, async_std::io::Error> {
     let max_threads = num_cpus::get();
 
     // Return an error on empty list
     // XXX maybe return the empty list?
     if ipl.is_empty() {
-        return Err(anyhow!("Empty list"));
+        return Err("Empty list");
     }
 
     // Put a hard limit on how many parallel thread to the max number of cores (incl.
@@ -96,8 +99,31 @@ pub fn resolve(ipl: &IpList, njobs: usize, res: &Solver) -> Result<IpList> {
     //
     match njobs {
         1 => Ok(simple_solve(&ipl, res)),
-        _ => Ok(parallel_solve(ipl, njobs, res)),
+        _ => {
+            let res = parallel_solve(ipl, njobs, res).await?;
+            Ok(res)
+        }
     }
+}
+
+/// Simple and straightforward sequential solver
+///
+/// Example:
+/// ```
+/// # use dmarc_rs::res::IpList;
+/// # use dmarc_rs::res::Ip;
+/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+///
+/// // select a given resolver
+/// let res = res_init(ResType::Real);
+///
+/// let ptr = simple_solve(l, res);
+/// ```
+///
+pub fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
+    let mut r: IpList = ipl.clone().into_iter().map(|ip| res.solve(&ip)).collect();
+    r.sort();
+    r
 }
 
 /// This trait will allow us to override the resolving function during tests & at run-time.
@@ -258,7 +284,7 @@ impl Resolver for RealResolver {
 ///
 /// Example:
 /// ```rust
-/// # use dmarc_rs::ip::Ip;
+/// # use dmarc_rs::res::Ip;
 /// # use dmarc_rs::resolver::{res_init, ResType};
 /// let res = res_init(ResType::Real);
 ///
