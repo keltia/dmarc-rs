@@ -63,10 +63,7 @@ pub mod version;
 //
 use cli::Opts;
 use dmarc_rs::filetype::*;
-use dmarc_rs::res::*;
-/*resolver::{res_init, ResType, Solver};
-use dmarc_rs::res::Ip;
-use dmarc_rs::res::IpList;*/
+use dmarc_rs::res::{res_init, ResType};
 use file::{check_for_files, scan_list};
 use version::version;
 
@@ -96,7 +93,7 @@ fn main() -> Result<()> {
         res = res_init(ResType::Null);
     }
 
-    // If no arguments, we assume stdin and we enforece the presence of `-t`.
+    // If no arguments, we assume stdin and we enforce the presence of `-t`.
     //
     if flist.is_empty() {
         // Assume stdin
