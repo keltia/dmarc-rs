@@ -22,16 +22,61 @@
 //!
 //! [dep-inj]: https://en.wikipedia.org/wiki/Dependency_injection
 //! [jmmv]: https://jmmv.dev/2022/04/rust-traits-and-dependency-injection.html
+//!
+//! We use `Vec` as container and `resolve()` is the main function to get all names.  As we have
+//! the choice between two solvers, you can select the simple single-threaded one by specifying
+//! that you want only 1 job.
+//!
+//! When the crate is compiled, the number of CPU & CPU threads is read and that gives us the upper
+//! bound for the parallelism.  The `dmarc-cat` binary will default to number physical cores but the hard
+//! limit is the number of total core threads (which is higher if the CPU supports Hyperthreading).
+//!
+//! **NOTE** I have no idea how CPU with different cores types (Apple M1 family or others) are handled,
+//! not sure it would make any difference in this case.
+//!
+//! We define a list of IP tuples from the `dmarc_rs::ip` crate and implement two methods
+//! for resolving the IP into names.  One is `simple_solve()` which is a straightforward sequential
+//! solver, the other one is `parallel_solve()` which is using threads from a pool to implement a
+//! worker-based fan-out/fan-in scheme with channels to move data around.
+//!
+//! You can select the resolving module to be used from the three defined in `dmarc_rs::resolver`.
+//!
+//! Examples:
+//! ```rust
+//! # use dmarc_rs::res::{res_init, resolve, ResType};
+//! let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+//! let res = res_init(ResType::Real);
+//!
+//! // Use the simple solver
+//! let ptr = resolve(&l, &res);
+//! dbg!(&ptr);
+//! ```
+//! and with the parallel solver but with the default resolver:
+//! ```rust
+//! # use dmarc_rs::res::{resolve, res_init, ResType};
+//!
+//! let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+//! let res = res_init(ResType::default());
+//!
+//! // Use the parallel solver
+//! let ptr = resolve(&l, &res);
+//! dbg!(&ptr);
+//! ```
+//!
+
+// External crates
+//
+use anyhow::{anyhow, Result};
+
+pub mod ip;
 
 // Std Library
+//
 use std::sync::Arc;
-use std::error::Error;
-use std::io::ErrorKind;
 
 // Our crates
-use crate::res::ares::parallel_solve;
+//
 use crate::res::ip::Ip;
-use crate::res::iplist::IpList;
 
 #[cfg(not(test))]
 use dns_lookup::lookup_addr;
@@ -47,10 +92,6 @@ use std::time::Duration;
 fn lookup_addr(_ip: &IpAddr) -> anyhow::Result<String> {
     Ok("foo.bar.invalid".to_string())
 }
-
-pub mod ares;
-pub mod ip;
-pub mod iplist;
 
 /// This trait will allow us to override the resolving function during tests & at run-time.
 /// It defines a single function that basically get the PTR value from an IP address.  It takes an
@@ -203,28 +244,19 @@ impl Resolver for RealResolver {
     }
 }
 
-/// Simple and straightforward sequential solver
-///
 /// Example:
+/// ```no_run
+/// # use dmarc_rs::res::ip::Ip;
+/// use dmarc_rs::res::{resolve, res_init, ResType};
+///
+/// let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+///
+/// // Select a resolver
+/// let res = res_init(ResType::Null);
+///
+/// let ptr = resolve(&l, &res);
 /// ```
-/// # use dmarc_rs::res::iplist::IpList;
-/// # use dmarc_rs::res::{res_init, ResType};
-/// # use dmarc_rs::res::simple_solve;
-/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
-/// // select a given resolver
-/// let res = res_init(ResType::Real);
-///
-/// let ptr = simple_solve(&l, &res);
-/// ```
-///
-pub fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
-    let mut r: IpList = ipl.clone().into_iter().map(|ip| res.solve(&ip)).collect();
-    r.sort();
-    r
-}
-
-
 /// Create an instance of the Solver type corresponding to one of the resolvers.
 ///
 /// Before using any of these resolver you have to instantiate one of them through `res_init()`.
@@ -232,8 +264,8 @@ pub fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
 ///
 /// Example:
 /// ```rust
-/// # use dmarc_rs::res::{Ip, res_init, ResType};
-/// # use dmarc_rs::resolver::{res_init, ResType};
+/// # use dmarc_rs::res::{res_init, ResType};
+/// # use dmarc_rs::res::ip::Ip;
 /// let res = res_init(ResType::Real);
 ///
 /// let ip = Ip::new("1.1.1.1");
@@ -257,60 +289,45 @@ pub fn res_init(t: ResType) -> Solver {
 /// `resolve()` is the main function call to get all names from the list of `Ip` we get from the
 /// XML file.
 ///
+/// It uses rayon's `par_iter()` to parallelize the solving.
+///
 /// Example:
 /// ```no_run
-/// # use dmarc_rs::res::iplist::IpList;
 /// # use dmarc_rs::res::{res_init, resolve, ResType};
 ///
-/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+/// let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// // Select a resolver
 /// let res = res_init(ResType::Real);
 ///
-/// // Using the simple single threaded solver.
-/// let ptr = resolve(&l, 1, &res).unwrap();
-///
-/// // Use the parallel solver with as many threads as the CPU has.
-/// let ptr2 = resolve(&l, num_cpus::get(), &res).unwrap();
+/// // Use the parallel solver with as many threads as the CPU has, rayon makes it
+/// // adaptative so even 1 Ip will be dealt with accordingly.
+/// let ptr = resolve(&l, &res).unwrap();
 /// ```
 ///
-pub async fn resolve(
-    ipl: &IpList,
-    njobs: usize,
-    res: &Solver,
-) -> Result<IpList, Error> {
-    let max_threads = num_cpus::get();
+use rayon::prelude::*;
 
+pub fn resolve(ipl: &Vec<&str>, res: &Solver) -> Result<Vec<Ip>> {
     // Return an error on empty list
     // XXX maybe return the empty list?
     if ipl.is_empty() {
-        return Err(Error::new(ErrorKind::InvalidInput, "Empty list"));
+        return Err(anyhow!("Empty list"));
     }
 
-    // Put a hard limit on how many parallel thread to the max number of cores (incl.
-    // avoid overhead even on modern versions of Hyperthreading).
-    //
-    if njobs > max_threads {
-        return Err(Error::new(ErrorKind::InvalidInput, "Too many threads"));
-    }
-
-    // Bypass the more complex code is IpList has only one element
+    // Bypass the more complex code is Vec has only one element
     if ipl.len() == 1 {
-        let ip = res.solve(&ipl[0]);
-        return Ok(IpList::from(ip));
+        let ip = res.solve(&Ip::new(&ipl[0]));
+        return Ok(vec![ip]);
     }
 
     // Call the appropriate one
     //
-    match njobs {
-        1 => Ok(simple_solve(&ipl, res)),
-        _ => {
-            let res = parallel_solve(ipl, njobs, res).await?;
-            Ok(res)
-        }
-    }
-}
+    let mut r: Vec<Ip> = ipl.par_iter().map(|ip| res.solve(&Ip::new(&ip))).collect();
 
+    r.sort();
+    assert_eq!(ipl.len(), r.len());
+    Ok(r)
+}
 
 #[cfg(test)]
 mod tests {
@@ -360,5 +377,48 @@ mod tests {
 
         let ip = Ip::new("1.1.1.1");
         assert_eq!("some.host.invalid", a.solve(&ip).name);
+    }
+
+    #[test]
+    fn test_resolve() {
+        let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+        let res = res_init(ResType::Fake);
+
+        // Using the simple single threaded solver.
+        let mut ptr: Vec<Ip> = l.iter().map(|ip| res.solve(&Ip::new(*ip))).collect();
+        ptr.sort();
+
+        // Use the parallel solver with 4 threads.
+        let ptr2 = resolve(&l, &res).unwrap();
+
+        assert_eq!(ptr, ptr2);
+    }
+
+    #[test]
+    fn test_resolve_empty() {
+        let a: Vec<&str> = Vec::new();
+        let res = res_init(ResType::Fake);
+
+        let r = resolve(&a, &res);
+
+        assert!(r.is_err());
+    }
+
+    #[test]
+    fn test_dumb_resolve_ok() {
+        let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+        let res = res_init(ResType::Fake);
+
+        let ptr = resolve(&l, &res);
+
+        assert!(ptr.is_ok());
+        let ptr = ptr.unwrap();
+
+        assert_eq!(l.len(), ptr.len());
+        // Order is not always preserved so check inside
+        //
+        for x in ptr {
+            assert_eq!("some.host.invalid", x.name);
+        }
     }
 }

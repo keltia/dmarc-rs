@@ -6,13 +6,13 @@
 //!
 //! Example:
 //! ```
-//! use dmarc_rs::res::Ip;
+//! use dmarc_rs::res::ip::Ip;
 //!
 //! let me = Ip::new("127.0.0.1");
 //! ```
 //! or
 //! ```
-//! use dmarc_rs::res::Ip;
+//! use dmarc_rs::res::ip::Ip;
 //!
 //! let me = Ip::from(("::1", "localhost"));
 //! ```
@@ -51,7 +51,7 @@ impl Ip {
     ///
     /// Example:
     /// ```rust
-    /// # use dmarc_rs::res::Ip;
+    /// # use dmarc_rs::res::ip::Ip;
     /// let ip = Ip::new("1.1.1.1");
     /// ```
     ///
@@ -66,7 +66,7 @@ impl Ip {
     ///
     /// Examples:
     /// ```rust,no_run
-    /// # use dmarc_rs::res::Ip;
+    /// # use dmarc_rs::res::ip::Ip;
     /// let ptr = Ip::new("1.1.1.1").solve();
     /// assert_eq!("one.one.one.one", ptr.name)
     /// # ;
@@ -76,7 +76,7 @@ impl Ip {
     ///
     /// Example:
     /// ```rust,no_run
-    /// # use dmarc_rs::res::Ip;
+    /// # use dmarc_rs::res::ip::Ip;
     /// let ptr = Ip::new("192.0.2.1").solve();
     /// assert_eq!("some.host.invalid", ptr.name)
     /// # ;
@@ -103,7 +103,7 @@ impl Ip {
 ///
 /// Example:
 /// ```
-/// # use dmarc_rs::res::Ip;
+/// # use dmarc_rs::res::ip::Ip;
 /// let t = Ip::from(("1.1.1.1", "one.one.one.one"));
 /// ```
 ///

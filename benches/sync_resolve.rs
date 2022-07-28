@@ -3,9 +3,7 @@
 //! Please run with `cargo bench`.
 //!
 
-use dmarc_rs::res::Ip;
-use dmarc_rs::res::IpList;
-use dmarc_rs::resolver::*;
+use dmarc_rs::res::{res_init, ResType, Solver};
 
 // Std library
 //
@@ -17,6 +15,7 @@ use std::thread;
 //
 use anyhow::Result;
 use criterion::{criterion_group, criterion_main, Criterion};
+use rayon::prelude::*;
 use threadpool::ThreadPool;
 
 /// **NOTE** the code is reimplemented here because a bench can not import from the binary, only
@@ -26,9 +25,9 @@ use threadpool::ThreadPool;
 ///
 /// Example:
 /// ```
-/// # use dmarc_rs::res::IpList;
+/// # use dmarc_rs::res::Vec;
 /// # use dmarc_rs::res::Ip;
-/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+/// let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
 /// // select a given resolver
 /// let res = res_init(ResType::Null);
@@ -36,32 +35,29 @@ use threadpool::ThreadPool;
 /// let ptr = simple_solve(l, res);
 /// ```
 ///
-fn simple_solve(ipl: &IpList, res: &Solver) -> IpList {
-    let mut r: IpList = ipl.clone().into_iter().map(|ip| res.solve(&ip)).collect();
+fn simple_solve(ipl: &Vec<String>, res: &Solver) -> Vec<Ip> {
+    let mut r: Vec<Ip> = ipl
+        .clone()
+        .into_iter()
+        .map(|ip| res.solve(&Ip::new(&ip)))
+        .collect();
     r.sort();
     assert_eq!(ipl.len(), r.len());
     r
 }
 
-/// Convert a list of IP into names with multiple threads
-///
-/// It uses a function to fill in the input channel then fan_out/fan_in to fill the result
-/// list.
-///
-/// Example:
-/// ```no_run
-/// # use dmarc_rs::res::Ip;
-/// # use dmarc_rs::res::IpList;
-/// let l = IpList::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-///
-/// // Select a resolver
-/// let res = res_init(ResType::Null);
-///
-/// let ptr = parallel_solve(l, 4, res);
-/// ```
-///
-fn parallel_solve(ipl: &IpList, workers: usize, res: &Solver) -> IpList {
-    let mut full = IpList::new();
+fn rayon_solve(ipl: &Vec<String>, res: &Solver) -> Vec<Ip> {
+    let s = ipl.len();
+
+    let mut r: Vec<Ip> = ipl.par_iter().map(|ip| res.solve(&Ip::new(ip))).collect();
+
+    r.sort();
+    assert_eq!(ipl.len(), r.len());
+    r
+}
+
+fn parallel_solve(ipl: &Vec<String>, workers: usize, res: &Solver) -> Vec<Ip> {
+    let mut full = Vec::new();
     let s = ipl.len();
 
     let pool = ThreadPool::new(workers);
@@ -77,7 +73,7 @@ fn parallel_solve(ipl: &IpList, workers: usize, res: &Solver) -> IpList {
 
 /// Take all values from the list and send them into a queue
 ///
-fn queue(ipl: &IpList) -> Result<Receiver<Ip>> {
+fn queue(ipl: &Vec<String>) -> Result<Receiver<String>> {
     let (tx, rx) = channel();
 
     // construct a copy of the list
@@ -95,7 +91,7 @@ fn queue(ipl: &IpList) -> Result<Receiver<Ip>> {
 /// Start enough workers to resolve IP into PTR.
 ///
 fn fan_out(
-    rx_gen: Receiver<Ip>,
+    rx_gen: Receiver<String>,
     pool: ThreadPool,
     njobs: usize,
     res: &Solver,
@@ -108,7 +104,7 @@ fn fan_out(
 
         let res = res.clone();
         pool.execute(move || {
-            let name: Ip = res.solve(&n);
+            let name = res.solve(&Ip::new(&n));
             tx.send(name).expect("waiting channel");
         });
     }
@@ -127,27 +123,26 @@ fn fan_in(rx_out: Receiver<Ip>) -> Result<Receiver<Ip>, Box<dyn std::error::Erro
     Ok(rx)
 }
 
-use fake::{Fake, Faker};
+use dmarc_rs::res::ip::Ip;
+use Sleep::{Sleep, Sleepr};
 
-/// Generate a dataset of N fake IpAddr
+/// Generate a dataset of N Sleep IpAddr
 ///
-fn setup() -> IpList {
-    let mut ipl = IpList::new();
+fn setup() -> Vec<String> {
+    let mut ipl: Vec<String> = Vec::new();
     for _ in 1..100 {
-        let ip: IpAddr = Faker.fake();
-        ipl.push(Ip {
-            ip,
-            name: "".to_string(),
-        });
+        let ip: IpAddr = Sleepr.Sleep();
+        let s = ip.to_string();
+        ipl.push(s.to_owned());
     }
-    ipl
+    ipl.clone()
 }
 
 fn resolve_simple(c: &mut Criterion) {
     let res = res_init(ResType::Sleep);
 
     let ipl = setup();
-    let mut r = IpList::new();
+    let mut r = Vec::new();
 
     c.bench_function("simple_solve 100", |b| {
         b.iter(|| r = simple_solve(&ipl, &res))
@@ -160,7 +155,7 @@ fn resolve_parallel_1(c: &mut Criterion) {
     let res = res_init(ResType::Sleep);
 
     let ipl = setup();
-    let mut r = IpList::new();
+    let mut r = Vec::new();
 
     c.bench_function("parallel_solve 100/1", |b| {
         b.iter(|| r = parallel_solve(&ipl, 1, &res))
@@ -170,10 +165,10 @@ fn resolve_parallel_1(c: &mut Criterion) {
 }
 
 fn resolve_parallel_4(c: &mut Criterion) {
-    let res = res_init(ResType::Null);
+    let res = res_init(ResType::Sleep);
 
     let ipl = setup();
-    let mut r = IpList::new();
+    let mut r = Vec::new();
 
     c.bench_function("parallel_solve 100/4", |b| {
         b.iter(|| r = parallel_solve(&ipl, 4, &res))
@@ -183,10 +178,10 @@ fn resolve_parallel_4(c: &mut Criterion) {
 }
 
 fn resolve_parallel_6(c: &mut Criterion) {
-    let res = res_init(ResType::Null);
+    let res = res_init(ResType::Sleep);
 
     let ipl = setup();
-    let mut r = IpList::new();
+    let mut r = Vec::new();
 
     c.bench_function("parallel_solve 100/6", |b| {
         b.iter(|| r = parallel_solve(&ipl, 6, &res))
@@ -196,14 +191,25 @@ fn resolve_parallel_6(c: &mut Criterion) {
 }
 
 fn resolve_parallel_8(c: &mut Criterion) {
-    let res = res_init(ResType::Null);
+    let res = res_init(ResType::Sleep);
 
     let ipl = setup();
-    let mut r = IpList::new();
+    let mut r = Vec::new();
 
     c.bench_function("parallel_solve 100/8", |b| {
         b.iter(|| r = parallel_solve(&ipl, 8, &res))
     });
+
+    let _ = r;
+}
+
+fn resolve_rayon(c: &mut Criterion) {
+    let res = res_init(ResType::Sleep);
+
+    let ipl = setup();
+    let mut r = Vec::new();
+
+    c.bench_function("rayon", |b| b.iter(|| r = rayon_solve(&ipl, &res)));
 
     let _ = r;
 }
@@ -214,6 +220,7 @@ criterion_group!(
     resolve_parallel_1,
     resolve_parallel_4,
     resolve_parallel_6,
-    resolve_parallel_8
+    resolve_parallel_8,
+    resolve_rayon,
 );
 criterion_main!(benches);

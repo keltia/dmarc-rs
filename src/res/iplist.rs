@@ -82,6 +82,10 @@ impl IpList {
         self.0.len()
     }
 
+    pub fn next(&self) -> Options<'_, Ip> {
+        self.0.iter().next()
+    }
+
     /// Implement is_empty() as a complement to len()
     ///
     /// Example:
