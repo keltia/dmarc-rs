@@ -18,6 +18,12 @@ use criterion::{criterion_group, criterion_main, Criterion};
 use rayon::prelude::*;
 use threadpool::ThreadPool;
 
+/// Number of fake IP in test
+///
+const MAX_IP: usize = 1000;
+
+const RES: ResType = ResType::Fake;
+
 /// **NOTE** the code is reimplemented here because a bench can not import from the binary, only
 /// the library.
 
@@ -124,14 +130,14 @@ fn fan_in(rx_out: Receiver<Ip>) -> Result<Receiver<Ip>, Box<dyn std::error::Erro
 }
 
 use dmarc_rs::res::ip::Ip;
-use Sleep::{Sleep, Sleepr};
+use fake::{Fake, Faker};
 
 /// Generate a dataset of N Sleep IpAddr
 ///
 fn setup() -> Vec<String> {
     let mut ipl: Vec<String> = Vec::new();
-    for _ in 1..100 {
-        let ip: IpAddr = Sleepr.Sleep();
+    for _ in 1..MAX_IP {
+        let ip: IpAddr = Faker.fake();
         let s = ip.to_string();
         ipl.push(s.to_owned());
     }
@@ -139,7 +145,7 @@ fn setup() -> Vec<String> {
 }
 
 fn resolve_simple(c: &mut Criterion) {
-    let res = res_init(ResType::Sleep);
+    let res = res_init(RES);
 
     let ipl = setup();
     let mut r = Vec::new();
@@ -152,7 +158,7 @@ fn resolve_simple(c: &mut Criterion) {
 }
 
 fn resolve_parallel_1(c: &mut Criterion) {
-    let res = res_init(ResType::Sleep);
+    let res = res_init(RES);
 
     let ipl = setup();
     let mut r = Vec::new();
@@ -165,7 +171,7 @@ fn resolve_parallel_1(c: &mut Criterion) {
 }
 
 fn resolve_parallel_4(c: &mut Criterion) {
-    let res = res_init(ResType::Sleep);
+    let res = res_init(RES);
 
     let ipl = setup();
     let mut r = Vec::new();
@@ -178,7 +184,7 @@ fn resolve_parallel_4(c: &mut Criterion) {
 }
 
 fn resolve_parallel_6(c: &mut Criterion) {
-    let res = res_init(ResType::Sleep);
+    let res = res_init(RES);
 
     let ipl = setup();
     let mut r = Vec::new();
@@ -191,7 +197,7 @@ fn resolve_parallel_6(c: &mut Criterion) {
 }
 
 fn resolve_parallel_8(c: &mut Criterion) {
-    let res = res_init(ResType::Sleep);
+    let res = res_init(RES);
 
     let ipl = setup();
     let mut r = Vec::new();
@@ -204,7 +210,7 @@ fn resolve_parallel_8(c: &mut Criterion) {
 }
 
 fn resolve_rayon(c: &mut Criterion) {
-    let res = res_init(ResType::Sleep);
+    let res = res_init(RES);
 
     let ipl = setup();
     let mut r = Vec::new();
