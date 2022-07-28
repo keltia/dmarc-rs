@@ -20,9 +20,9 @@ use threadpool::ThreadPool;
 
 /// Number of fake IP in test
 ///
-const MAX_IP: usize = 1000;
+const MAX_IP: usize = 100;
 
-const RES: ResType = ResType::Fake;
+const RES: ResType = ResType::Sleep;
 
 /// **NOTE** the code is reimplemented here because a bench can not import from the binary, only
 /// the library.
