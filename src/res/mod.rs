@@ -64,6 +64,10 @@
 //! [jmmv]: https://jmmv.dev/2022/04/rust-traits-and-dependency-injection.html
 //!
 
+/// Constant defining how much we want to sleep for ResType::Sleep.
+///
+const WAIT_TIME: f32 = 0.001f32;
+
 // External crates
 //
 use anyhow::{anyhow, Result};
@@ -193,7 +197,8 @@ impl Resolver for FakeResolver {
     }
 }
 
-/// This is the Sleep resolver, for the moment it returns `some.host.invalid`  for all IP.
+/// This is the Sleep resolver, for the moment it returns `some.host.invalid`  for all IP
+/// with a small sleep() inserted to let other threads go.
 ///
 pub struct SleepResolver();
 
@@ -211,7 +216,7 @@ impl Resolver for SleepResolver {
     ///
     #[inline]
     fn solve(&self, ip: &Ip) -> Ip {
-        sleep(Duration::from_secs_f32(0.001f32));
+        sleep(Duration::from_secs_f32(WAIT_TIME));
         Ip {
             ip: ip.ip,
             name: "some.host.invalid".to_string(),
