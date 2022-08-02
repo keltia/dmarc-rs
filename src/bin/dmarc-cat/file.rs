@@ -40,33 +40,47 @@ pub fn check_for_files(lfn: &[PathBuf]) -> Vec<Entry> {
     res
 }
 
-/// Scan the list of files and run `analyze_file()`  on each of them
+use rayon::prelude::*;
+
+/// Scan the list of files and run `handle_one_file()`  on each of them
 /// accumulating results.
 ///
 pub fn scan_list(lfn: &Vec<Entry>) -> Result<String> {
-    let mut r = vec![];
     let mut failed = vec![];
 
-    for fp in lfn {
-        let mut fh = match File::open(&fp.p) {
-            Ok(fh) => fh,
-            Err(e) => {
-                log::warn!("Warning: can't open {:?}: {}", fp, e.to_string());
-                failed.push(fp.p.to_str().unwrap());
-                continue;
-            }
-        };
-        r.push(analyze_file(&mut fh).unwrap());
-    }
+    // rr: raw results
+    //
+    let rr: Vec<Result<String>> = lfn.par_iter().map(|f| handle_one_file(f)).collect();
+
     if failed.is_empty() {
-        return Ok(r.join("/"));
+        return Ok(rr.join("/"));
     }
     Err(anyhow!("{:?}", failed))
+}
+
+pub fn handle_one_file(e: &Entry) -> Result<String> {
+    match e.ft {
+        Input::Csv => Ok("csv".to_string()),
+        Input::Plain => Ok("txt".to_string()),
+        Input::Xml => Ok("xml".to_string()),
+        Input::Zip => Ok("zip".to_string()),
+        Input::Gzip => Ok("gzip".to_string()),
+    }
+
+    let mut fh = match File::open(&e.p) {
+        Ok(fh) => fh,
+        Err(e) => {
+            log::warn!("Warning: can't open {:?}: {}", e, e.to_string());
+            failed.push(e.p.to_str().unwrap());
+        }
+    };
+    Ok("Nope".into())
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
     #[test]
     fn test_scan_list_empty() {
         let r = scan_list(&vec![Entry {
