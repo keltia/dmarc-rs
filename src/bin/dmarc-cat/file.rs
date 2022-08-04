@@ -67,7 +67,7 @@ pub fn scan_list(lfn: &Vec<Entry>) -> Result<String> {
     Err(anyhow!("{:?}", failed))
 }
 
-pub fn handle_one_file(e: &Entry) -> Result<String> {
+pub fn handle_one_file(e: &PathBuf) -> Result<String> {
     match e.ft {
         Input::Csv => Ok("csv".to_string()),
         Input::Plain => Ok("txt".to_string()),
