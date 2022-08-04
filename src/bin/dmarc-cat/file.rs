@@ -50,7 +50,16 @@ pub fn scan_list(lfn: &Vec<Entry>) -> Result<String> {
 
     // rr: raw results
     //
-    let rr: Vec<Result<String>> = lfn.par_iter().map(|f| handle_one_file(f)).collect();
+    let rr: Vec<Result<String>> = lfn
+        .par_iter()
+        .map(|f| match handle_one_file(&f) {
+            Err(e) => {
+                log::warn!("Warning: can't open {:?}: {}", &f.p, e.to_string());
+                failed.push(&f.p)
+            }
+            _ => (),
+        })
+        .collect();
 
     if failed.is_empty() {
         return Ok(rr.join("/"));
@@ -65,15 +74,8 @@ pub fn handle_one_file(e: &Entry) -> Result<String> {
         Input::Xml => Ok("xml".to_string()),
         Input::Zip => Ok("zip".to_string()),
         Input::Gzip => Ok("gzip".to_string()),
-    }
-
-    let mut fh = match File::open(&e.p) {
-        Ok(fh) => fh,
-        Err(e) => {
-            log::warn!("Warning: can't open {:?}: {}", e, e.to_string());
-            failed.push(e.p.to_str().unwrap());
-        }
     };
+
     Ok("Nope".into())
 }
 

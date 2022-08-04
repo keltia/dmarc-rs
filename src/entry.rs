@@ -96,9 +96,8 @@ impl Entry {
                     Ok(fh) => fh,
                     Err(e) => return Err(anyhow!("{}", e.to_string())),
                 };
-                let mut lines = BufReader::new(fh);
                 let mut s = String::new();
-                let _cnt = lines.read_to_string(&mut s);
+                BufReader::new(fh).read_to_string(&mut s)?;
                 Ok(s)
             }
             Input::Zip => unimplemented!(),

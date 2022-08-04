@@ -316,13 +316,13 @@ pub fn resolve(ipl: &Vec<&str>, res: &Solver) -> Result<Vec<Ip>> {
 
     // Bypass the more complex code is Vec has only one element
     if ipl.len() == 1 {
-        let ip = res.solve(&Ip::new(&ipl[0]));
+        let ip = res.solve(&Ip::new(ipl[0]));
         return Ok(vec![ip]);
     }
 
     // Call the appropriate one
     //
-    let mut r: Vec<Ip> = ipl.par_iter().map(|ip| res.solve(&Ip::new(&ip))).collect();
+    let mut r: Vec<Ip> = ipl.par_iter().map(|ip| res.solve(&Ip::new(ip))).collect();
 
     r.sort();
     assert_eq!(ipl.len(), r.len());
