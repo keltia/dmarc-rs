@@ -14,9 +14,9 @@ use crate::version::NAME;
 
 /// All parsable options and arguments.
 #[derive(Parser, Debug)]
+#[command(disable_version_flag = true)]
 #[clap(name = NAME, about = crate_description!())]
 #[clap(version = crate_version!(), author = crate_authors!())]
-#[clap(setting = AppSettings::NoAutoVersion)]
 pub struct Opts {
     /// debug mode
     #[clap(short = 'D', long = "debug")]
