@@ -316,8 +316,7 @@ pub fn resolve(ipl: &Vec<&str>, res: &Solver) -> Result<Vec<Ip>> {
 
     // Bypass the more complex code is Vec has only one element
     if ipl.len() == 1 {
-        let ip = res.solve(&Ip::new(ipl[0]));
-        return Ok(vec![ip]);
+        return Ok(vec![res.solve(&Ip::new(ipl[0]))]);
     }
 
     // Call the appropriate one
