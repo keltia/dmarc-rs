@@ -39,20 +39,20 @@ pub struct ReportMetadata {
 }
 
 /// Alignment (strict or relaxed) for DKIM and SPF.
-#[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize)]
+#[serde(untagged, rename_all = "lowercase")]
 pub enum Alignment {
-    r,
-    s,
+    R,
+    S,
 }
 
 /// The policy actions specified by p and sp in the DMARC record.
-#[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize)]
+#[serde(untagged, rename_all = "lowercase")]
 pub enum Disposition {
-    none,
-    quarantine,
-    reject,
+    None,
+    Quarantine,
+    Reject,
 }
 
 /// The DMARC policy that applied to the messages in this report, as published in the DNS
@@ -75,23 +75,25 @@ pub struct PolicyPublished {
 }
 
 /// The DMARC-aligned authentication result
-#[allow(non_camel_case_types)]
+///
 #[derive(Debug, Deserialize)]
+#[serde(untagged, rename_all = "lowercase")]
 pub enum DMARCResult {
-    fail,
-    pass,
+    Fail,
+    Pass,
 }
 
 /// Reasons that may affect DMARC disposition or execution thereof
-#[allow(non_camel_case_types)]
+///
 #[derive(Debug, Deserialize)]
+#[serde(untagged, rename_all = "snake_case")]
 pub enum PolicyOverride {
-    forwarded,
-    sampled_out,
-    trusted_forwarder,
-    mailing_list,
-    local_policy,
-    other,
+    Forwarded,
+    SampledOut,
+    TrustedForwarder,
+    MailingList,
+    LocalPolicy,
+    Other,
 }
 
 /// How do we allow report generators to include new classes of override reasons if they
@@ -141,16 +143,16 @@ pub struct Identifier {
 }
 
 /// DKIM verification result, according to RFC 7001 Section 2.6.1.
-#[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize)]
+#[serde(untagged, rename_all = "lowercase")]
 pub enum DKIMResult {
-    none,
-    pass,
-    fail,
-    policy,
-    neutral,
-    temperror,
-    permerror,
+    Pone,
+    Pass,
+    Fail,
+    Policy,
+    Neutral,
+    Temperror,
+    Permerror,
 }
 
 /// The DKIM Authentication result.
@@ -167,24 +169,25 @@ pub struct DKIMAuthResult {
 }
 
 /// SPF domain scope.
-#[allow(non_camel_case_types)]
 #[derive(Debug, Deserialize)]
+#[serde(untagged, rename_all = "snake_case")]
 pub enum SPFDomainScope {
-    helo,
-    mfrom,
+    Helo,
+    MFrom,
 }
 
 /// The SPF result.
-#[allow(non_camel_case_types)]
+///
 #[derive(Debug, Deserialize)]
+#[serde(untagged, rename_all = "lowercase")]
 pub enum SPFResult {
-    none,
-    neutral,
-    pass,
-    fail,
-    softfail,
-    temperror,
-    permerror,
+    None,
+    Neutral,
+    Pass,
+    Fail,
+    Softfail,
+    Temperror,
+    Permerror,
 }
 
 /// The SPF Authentication result.
