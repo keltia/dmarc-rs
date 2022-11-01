@@ -20,9 +20,6 @@
 //!
 //! **BUGS** this version only handle **one** name per IP (whatever is returned by `lookup_addr()`).
 //!
-//! [dep-inj]: https://en.wikipedia.org/wiki/Dependency_injection
-//! [jmmv]: https://jmmv.dev/2022/04/rust-traits-and-dependency-injection.html
-//!
 //! We use `Vec` as container and `resolve()` is the main function to get all names.  As we have
 //! the choice between two solvers, you can select the simple single-threaded one by specifying
 //! that you want only 1 job.
@@ -62,6 +59,9 @@
 //! let ptr = resolve(&l, &res);
 //! dbg!(&ptr);
 //! ```
+//!
+//! [dep-inj]: https://en.wikipedia.org/wiki/Dependency_injection
+//! [jmmv]: https://jmmv.dev/2022/04/rust-traits-and-dependency-injection.html
 //!
 
 // External crates
