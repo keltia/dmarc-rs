@@ -14,8 +14,6 @@
 //!
 //! The name is not case-sensitive as seen in the tests below.
 //!
-//! `valid_input()` returns one of the `Input` enum values or an error.
-//!
 
 // Std Library
 //
@@ -23,7 +21,6 @@ use std::path::PathBuf;
 
 // External crates
 //
-use anyhow::{anyhow, Result};
 
 /// Allowed type of input, default for plain text is XML
 ///
@@ -45,7 +42,7 @@ impl Input {
     /// Return a guess of the Input based on the extension otherwise return None
     ///
     /// ```rust
-    /// use dmarc_rs::input::Input;
+    /// # use dmarc_rs::input::Input;
     ///
     /// let ft = Input::from_path("foo.csv");
     /// assert_eq!(Input::Csv, ft);
@@ -53,7 +50,23 @@ impl Input {
     ///
     pub fn from_path<T: Into<PathBuf>>(p: T) -> Self {
         let pp = p.into();
-        match pp.extension().to_lowercase() {
+        Input::from(
+            pp.extension()
+                .unwrap()
+                .to_ascii_lowercase()
+                .to_str()
+                .unwrap(),
+        )
+    }
+}
+
+impl From<&str> for Input {
+    /// Basic check from an &str like checking a CLI flag
+    ///
+    /// Can it be used to check a file's extension (see above `from_path()`)
+    ///
+    fn from(s: &str) -> Self {
+        match s {
             "csv" => Input::Csv,
             "txt" => Input::Xml,
             "gzip" => Input::Gzip,
@@ -84,7 +97,7 @@ mod tests {
     #[case("foo.csv", Input::Csv)]
     #[case("foo.CSV", Input::Csv)]
     #[case(".CSV", Input::None)]
-    fn test_from(#[case] f: &str, #[case] t: Input) {
+    fn test_input_from_path(#[case] f: &str, #[case] t: Input) {
         assert_eq!(t, Input::from_path(p));
     }
 }
