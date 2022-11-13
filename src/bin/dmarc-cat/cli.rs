@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 // External crates
 //
-use clap::{crate_authors, crate_description, crate_version, AppSettings, Parser};
+use clap::{crate_authors, crate_description, crate_version, Parser};
 
 // Internal crates
 //
@@ -14,9 +14,9 @@ use crate::version::NAME;
 
 /// All parsable options and arguments.
 #[derive(Parser, Debug)]
+#[command(disable_version_flag = true)]
 #[clap(name = NAME, about = crate_description!())]
 #[clap(version = crate_version!(), author = crate_authors!())]
-#[clap(setting = AppSettings::NoAutoVersion)]
 pub struct Opts {
     /// debug mode
     #[clap(short = 'D', long = "debug")]
