@@ -76,6 +76,20 @@ impl Entry {
         self
     }
 
+    /// Return the stored path
+    ///
+    #[inline]
+    pub fn path(self) -> PathBuf {
+        self.p
+    }
+
+    /// Return the Input type of the concerned entry
+    ///
+    #[inline]
+    pub fn input_type(self) -> Input {
+        self.ft
+    }
+
     /// Open the given file and return the content as a String.
     ///
     /// This is where we call the different functions for the different types of
@@ -154,5 +168,12 @@ mod tests {
         assert!(txt.is_ok());
         let txt = txt.unwrap();
         assert!(txt.contains("dmarc-rs"))
+    }
+
+    #[test]
+    fn test_entry_path() {
+        let f = Entry::new("Cargo.toml");
+
+        assert_eq!(PathBuf::from("Cargo.toml"), f.path());
     }
 }
