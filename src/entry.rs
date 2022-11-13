@@ -5,29 +5,36 @@
 
 // Std library
 //
+use std::fmt::{Debug, Formatter};
 use std::fs::File;
+use std::io::prelude::*;
 use std::io::{BufReader, Read};
 use std::path::PathBuf;
 
 // Our crates
 //
-use crate::filetype::{ext_to_ftype, Input};
+use crate::input::Input;
 
+// Extra packages
+//
 use anyhow::{anyhow, Result};
+use log::trace;
 
-/// Entry carries the file path and its type (Plain, Gzip, etc.).
-///
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
+/// Entry carries the file path and its type (Xml, Gzip, etc.).
+#[derive(Clone, Debug)]
 pub struct Entry {
-    /// Pathname
+    /// Pathname if any, `<stdin>` otherwise
     pub p: PathBuf,
-    /// File type as found by `ext_to_ftype()`
+    /// File type as found by `Input::from_path(&str)` or through `-t`
     pub ft: Input,
+    /// Result of the DMARC parsing
+    pub res: String,
 }
 
 impl Default for Entry {
+    #[inline]
     fn default() -> Self {
-        Entry::new(&PathBuf::from(""))
+        Entry::new("")
     }
 }
 
@@ -38,17 +45,17 @@ impl Entry {
     /// ```
     /// use std::path::PathBuf;
     /// use dmarc_rs::entry::Entry;
-    /// use dmarc_rs::filetype::Input;
     ///
-    /// let f = Entry::new(&PathBuf::from("Foo.zip"));
-    ///
-    /// println!("{:?}", f.ft);
+    /// let f = Entry::new("Foo.zip");
     /// ```
     ///
-    pub fn new(p: &PathBuf) -> Self {
+    #[inline]
+    pub fn new<P: Into<PathBuf>>(p: P) -> Self {
+        let pp = p.into();
         Entry {
-            p: p.to_owned(),
-            ft: ext_to_ftype(p),
+            p: pp.clone(),
+            ft: Input::from_path(pp),
+            res: "".to_owned(),
         }
     }
 
@@ -57,15 +64,14 @@ impl Entry {
     /// Example:
     /// ```
     /// use dmarc_rs::entry::Entry;
-    /// use dmarc_rs::filetype::Input;
+    /// use dmarc_rs::input::Input;
     ///
     /// // This is obviously wrong, don't do it :)
-    /// let f = Entry::from("Foo.zip").set(Input::Gzip);
-    ///
-    /// println!("{:?}", f.ft);
+    /// let mut f = Entry::new("Foo.zip").set(Input::Gzip);
     /// ```
     ///
-    pub fn set(mut self, t: Input) -> Self {
+    #[inline]
+    pub fn set(&mut self, t: Input) -> &mut Self {
         self.ft = t;
         self
     }
@@ -75,15 +81,15 @@ impl Entry {
     /// This is where we call the different functions for the different types of
     /// input files.
     ///
-    /// **NOTE** plain files are assumed to be XML.
+    /// **NOTE** Plain files are assumed to be XML.
     ///
     /// Example:
     /// ```
     /// # use anyhow::anyhow;
     /// # use dmarc_rs::entry::Entry;
-    /// let f = Entry::from("foo.xml");
+    /// let mut f = Entry::new("foo.xml");
     ///
-    /// let xml = match f.get_data() {
+    /// let xml = match f.fetch() {
     ///     Ok(s) => s,
     ///     Err(e) => anyhow!("Error reading.").to_string(),
     /// };
@@ -106,65 +112,45 @@ impl Entry {
     }
 }
 
-impl From<&str> for Entry {
-    /// Convert a string slice into a PathBuf
-    ///
-    /// Example:
-    /// ```
-    /// use dmarc_rs::entry::Entry;
-    /// let e = Entry::from("foo.zip");
-    /// ```
-    ///
-    fn from(path: &str) -> Self {
-        let p = PathBuf::from(path);
-        Entry {
-            p: p.to_owned(),
-            ft: ext_to_ftype(&p),
-        }
-    }
+pub fn read_zip(fh: &dyn BufRead) -> String {
+    unimplemented!()
+}
+
+pub fn read_gzip(fh: &dyn BufRead) -> String {
+    unimplemented!()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    use anyhow::bail;
     use rstest::rstest;
 
     #[rstest]
-    #[case("", Input::Plain)]
-    #[case("foo", Input::Plain)]
+    #[case("", Input::Xml)]
+    #[case("foo", Input::Xml)]
     #[case("foo.zip", Input::Zip)]
     #[case("bar.gz", Input::Gzip)]
     #[case("baz.xml.gz", Input::Gzip)]
     fn test_new(#[case] p: &str, #[case] res: Input) {
-        let p = PathBuf::from(p);
         let e = Entry::new(&p);
-        assert_eq!(res, e.ft);
-    }
-
-    #[rstest]
-    #[case("", Input::Plain)]
-    #[case("foo", Input::Plain)]
-    #[case("foo.zip", Input::Zip)]
-    #[case("bar.gz", Input::Gzip)]
-    #[case("baz.xml.gz", Input::Gzip)]
-    fn test_from(#[case] p: &str, #[case] res: Input) {
-        let e = Entry::from(p);
-        let f = Entry::new(&PathBuf::from(p));
-        assert_eq!(res, e.ft);
-        assert_eq!(f, e);
+        assert_eq!(res, e.input_type());
     }
 
     #[test]
     fn test_set() {
-        let e = Entry::from("foo").set(Input::Gzip);
-        assert_eq!(Input::Gzip, e.ft);
+        let mut e = Entry::new("foo");
+
+        e.set(Input::Gzip);
+        assert_eq!(Input::Gzip, e.input_type());
     }
 
     #[test]
     fn test_entry_get_data() {
-        let f = Entry::from("Cargo.toml");
+        let mut f = Entry::new("Cargo.toml");
 
-        let txt = f.get_data();
+        let txt = f.fetch();
         assert!(txt.is_ok());
         let txt = txt.unwrap();
         assert!(txt.contains("dmarc-rs"))
