@@ -16,10 +16,7 @@ use dmarc_rs::filetype::*;
 // External crates
 //
 use anyhow::{anyhow, Result};
-
-pub fn handle_stream(fin: &dyn io::BufRead, ftype: Input) {
-    unimplemented!()
-}
+use log::{info, trace, warn};
 
 /// Check if every file in the list and only return the list of valid ones.
 ///
