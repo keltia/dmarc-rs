@@ -23,24 +23,11 @@ pub fn handle_stream(fin: &dyn io::BufRead, ftype: Input) {
 
 /// Check if every file in the list and only return the list of valid ones.
 ///
-pub fn check_for_files(lfn: &[PathBuf]) -> Vec<Entry> {
-    let mut res: Vec<Entry> = vec![];
-
-    // Check for various files.
-    //
-    for f in lfn.iter() {
-        if f.exists() || *f == PathBuf::from("-") {
-            res.push(Entry::new(f));
-            println!("file: {:?}", f);
-        } else {
-            println!("Unknown file {:?}", f);
-            continue;
-        }
-    }
-    res
+macro_rules! getpaths {
+    ($file:ident) => {
+        $file.iter().map(|f| f.path()).collect::<Vec<PathBuf>>()
+    };
 }
-
-use rayon::prelude::*;
 
 /// Scan the list of files and run `handle_one_file()`  on each of them
 /// accumulating results.
