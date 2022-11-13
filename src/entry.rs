@@ -109,20 +109,26 @@ impl Entry {
     /// };
     /// ```
     ///
-    pub fn get_data(self) -> Result<String> {
-        match self.ft {
-            Input::Csv | Input::Xml | Input::Plain => {
-                let fh = match File::open(&self.p) {
-                    Ok(fh) => fh,
-                    Err(e) => return Err(anyhow!("{}", e.to_string())),
-                };
-                let mut s = String::new();
-                BufReader::new(fh).read_to_string(&mut s)?;
-                Ok(s)
-            }
-            Input::Zip => unimplemented!(),
-            Input::Gzip => unimplemented!(),
-        }
+    pub fn fetch(&mut self) -> Result<String> {
+        let mut bf = match File::open(&self.p) {
+            Ok(fh) => BufReader::new(fh),
+            Err(e) => return Err(anyhow!("{}", e.to_string())),
+        };
+        let mut res = String::new();
+        let c = bf.read_to_string(&mut res)?;
+        trace!("read {} bytes", c);
+
+        // We have the raw, possibly compressed in `res`
+        //
+        // Now see the file content
+        //
+        let s = match self.ft {
+            Input::Csv | Input::Xml => res,
+            Input::Zip => "unimplemented".to_string(),
+            Input::Gzip => "unimplemented".to_string(),
+            Input::None => return Err(anyhow!("invalid file content")),
+        };
+        Ok(s)
     }
 }
 
