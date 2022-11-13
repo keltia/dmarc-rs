@@ -29,26 +29,46 @@ macro_rules! getpaths {
 /// Scan the list of files and run `handle_one_file()`  on each of them
 /// accumulating results.
 ///
-pub fn scan_list(lfn: &Vec<Entry>) -> Result<String> {
-    let mut failed = vec![];
-
-    // rr: raw results
+pub fn scan_list(lfn: &mut Vec<Entry>) -> Result<String> {
+    // loop over each entry, resolution is done in parallel through rayon, no need to do the
+    // the same here
     //
-    let rr: Vec<Result<String>> = lfn
-        .par_iter()
-        .map(|f| match handle_one_file(&f) {
-            Err(e) => {
-                log::warn!("Warning: can't open {:?}: {}", &f.p, e.to_string());
-                failed.push(&f.p)
-            }
-            _ => (),
-        })
-        .collect();
+    // sorting out all which succeeded and those which failed
+    //
+    let mut res: Vec<String> = vec![];
 
-    if failed.is_empty() {
-        return Ok(rr.join("/"));
-    }
-    Err(anyhow!("{:?}", failed))
+    let (rr, failed): (Vec<_>, Vec<_>) = lfn
+        .iter_mut()
+        .inspect(|f| info!("looking at {:?}", f))
+        .partition(|&f| {
+            let mut f = f.clone();
+            if let Ok(s) = f.fetch() {
+                res.push(s);
+                true
+            } else {
+                false
+            }
+        });
+
+    // List of succeeded entries
+    dbg!(&rr);
+    // List of failed ones
+    dbg!(&failed);
+
+    // collect all succeeded entries
+    //
+    let res = rr
+        .iter()
+        .fold("", |res, &f| (res.to_string() + &f.res).as_str());
+
+    info!("succeeded files: {:?}", getpaths!(rr));
+
+    // Get all failed path names
+    //
+    let errlist: Vec<PathBuf> = getpaths!(failed);
+    info!("failed files: {:?}", errlist);
+
+    Ok(res.to_string())
 }
 
 pub fn handle_one_file(e: &Entry) -> Result<String> {
