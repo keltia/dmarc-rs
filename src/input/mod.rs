@@ -15,6 +15,9 @@
 //! The name is not case-sensitive as seen in the tests below.
 //!
 
+pub mod gzip;
+pub mod zip;
+
 // Std Library
 //
 use std::path::PathBuf;
@@ -97,7 +100,7 @@ mod tests {
     #[case("foo.csv", Input::Csv)]
     #[case("foo.CSV", Input::Csv)]
     #[case(".CSV", Input::None)]
-    fn test_input_from_path(#[case] f: &str, #[case] t: Input) {
+    fn test_input_from_path(#[case] p: &str, #[case] t: Input) {
         assert_eq!(t, Input::from_path(p));
     }
 }
