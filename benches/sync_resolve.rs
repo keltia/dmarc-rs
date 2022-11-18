@@ -15,12 +15,13 @@ use std::thread;
 //
 use anyhow::Result;
 use criterion::{criterion_group, criterion_main, Criterion};
+use itertools::Itertools;
 use rayon::prelude::*;
 use threadpool::ThreadPool;
 
 /// Number of fake IP in test
 ///
-const MAX_IP: usize = 100;
+const MAX_IP: usize = 50;
 
 const RES: ResType = ResType::Sleep;
 
@@ -42,12 +43,11 @@ const RES: ResType = ResType::Sleep;
 /// ```
 ///
 fn simple_solve(ipl: &Vec<String>, res: &Solver) -> Vec<Ip> {
-    let mut r: Vec<Ip> = ipl
-        .clone()
-        .into_iter()
-        .map(|ip| res.solve(&Ip::new(&ip)))
+    let r: Vec<Ip> = ipl
+        .iter()
+        .map(|ip| res.solve(&Ip::new(ip)))
+        .sorted()
         .collect();
-    r.sort();
     assert_eq!(ipl.len(), r.len());
     r
 }
@@ -63,16 +63,13 @@ fn rayon_solve(ipl: &Vec<String>, res: &Solver) -> Vec<Ip> {
 }
 
 fn parallel_solve(ipl: &Vec<String>, workers: usize, res: &Solver) -> Vec<Ip> {
-    let mut full = Vec::new();
     let s = ipl.len();
 
     let pool = ThreadPool::new(workers);
     let rx_gen = queue(ipl).unwrap();
     let rx_out = fan_out(rx_gen, pool, s, res).unwrap();
-    for ip in fan_in(rx_out).unwrap() {
-        full.push(ip);
-    }
-    full.sort();
+    let full: Vec<Ip> = fan_in(rx_out).unwrap().iter().sorted().collect();
+
     assert_eq!(ipl.len(), full.len());
     full
 }
