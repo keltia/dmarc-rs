@@ -49,6 +49,26 @@
 //! - [DKIM](http://www.rfc-editor.org/info/rfc6376)
 //!
 
+use anyhow::{anyhow, bail, Result};
+use clap::Parser;
+use log::{error, trace};
+use std::path::PathBuf;
+use stderrlog::LogLevelNum::{Debug, Error, Info, Trace};
+
+// Our crates
+//
+use cli::Opts;
+use dmarc_rs::entry::Entry;
+use dmarc_rs::filetype::*;
+use dmarc_rs::res::{res_init, ResType};
+use dmarc_rs::types::Feedback;
+use file::{check_for_files, scan_list};
+use version::version;
+
+// External crates
+//
+use crate::file::handle_one_file;
+
 // Internal crates
 //
 pub mod analyze;
@@ -95,9 +115,11 @@ fn main() -> Result<()> {
     let mut flist = opts.files.to_owned();
     let mut ftype = Input::Plain;
 
+    trace!("list={:?}", flist);
+
     // Handle --no-resolv flag
     //
-    let _res = if opts.noresolve {
+    let res = if opts.noresolve {
         res_init(ResType::Null)
     } else {
         res_init(ResType::Real)
@@ -105,43 +127,52 @@ fn main() -> Result<()> {
 
     // If no arguments, we assume stdin and we enforce the presence of `-t`.
     //
-    if flist.is_empty() {
+    let worklist: Vec<Entry> = if flist.is_empty() {
         // Assume stdin
         //
-        ftype = match opts.itype {
+        let ft = match opts.itype {
             Some(it) => match valid_input(&it) {
                 Ok(it) => it,
-                _ => return Err(anyhow!("Invalid type for -t")),
+                _ => return bail!("Invalid type for -t"),
             },
-            None => return Err(anyhow!("-t MUST be provided")),
+            None => return bail!("-t MUST be provided"),
         };
-        flist.push("-".into())
-    }
+        vec![Entry { p: "-".into(), ft }]
+    } else {
+        flist
+            .iter()
+            // weed out unknown files
+            .filter(|p| PathBuf::from(p).exists())
+            // Create en entry with file type
+            .map(|p| Entry::new(p))
+            .collect::<Vec<_>>()
+    };
 
-    println!("{:?}", flist);
+    trace!("worklist={:?}", worklist);
 
-    use rayon::prelude::*;
-
-    let mut failed = vec![];
+    let mut failed: Vec<&str> = vec![];
 
     // Do the thing.
     //
     // results will have a vector of Result
     //
-    let results: Vec<Result<Feedback>> = flist
-        .par_iter()
+    let results: Vec<Result<Feedback>> = worklist
+        .iter()
         .map(|fname| handle_one_file(&fname))
         .collect();
 
     for r in results.iter() {
-        match r {
+        let r = match r {
             Ok(r) => r,
-            Err(e) => {}
-        }
+            Err(e) => {
+                error!("Error: {e}")
+            }
+        };
 
         if failed.is_empty() {
             return Ok(rr.join("/"));
         }
+
         Err(anyhow!("{:?}", failed))
     }
     println!("{:?}", output);

@@ -27,7 +27,10 @@ pub struct Entry {
 
 impl Default for Entry {
     fn default() -> Self {
-        Entry::new(&PathBuf::from(""))
+        Entry {
+            p: PathBuf::from(""),
+            ft: Input::Unknown,
+        }
     }
 }
 
@@ -40,14 +43,15 @@ impl Entry {
     /// use dmarc_rs::entry::Entry;
     /// use dmarc_rs::filetype::Input;
     ///
-    /// let f = Entry::new(&PathBuf::from("Foo.zip"));
+    /// let f = Entry::new("Foo.zip");
     ///
     /// println!("{:?}", f.ft);
     /// ```
     ///
-    pub fn new(p: &PathBuf) -> Self {
+    pub fn new(p: &str) -> Self {
+        let path = PathBuf::from(p);
         Entry {
-            p: p.to_owned(),
+            p: path,
             ft: ext_to_ftype(p),
         }
     }
@@ -60,7 +64,7 @@ impl Entry {
     /// use dmarc_rs::filetype::Input;
     ///
     /// // This is obviously wrong, don't do it :)
-    /// let f = Entry::from("Foo.zip").set(Input::Gzip);
+    /// let f = Entry::new("Foo.zip").set(Input::Gzip);
     ///
     /// println!("{:?}", f.ft);
     /// ```
@@ -81,7 +85,7 @@ impl Entry {
     /// ```
     /// # use anyhow::anyhow;
     /// # use dmarc_rs::entry::Entry;
-    /// let f = Entry::from("foo.xml");
+    /// let f = Entry::new("foo.xml");
     ///
     /// let xml = match f.get_data() {
     ///     Ok(s) => s,
@@ -102,24 +106,7 @@ impl Entry {
             }
             Input::Zip => unimplemented!(),
             Input::Gzip => unimplemented!(),
-        }
-    }
-}
-
-impl From<&str> for Entry {
-    /// Convert a string slice into a PathBuf
-    ///
-    /// Example:
-    /// ```
-    /// use dmarc_rs::entry::Entry;
-    /// let e = Entry::from("foo.zip");
-    /// ```
-    ///
-    fn from(path: &str) -> Self {
-        let p = PathBuf::from(path);
-        Entry {
-            p: p.to_owned(),
-            ft: ext_to_ftype(&p),
+            Input::Unknown => Ok("INVALID".to_string()),
         }
     }
 }
@@ -136,8 +123,7 @@ mod tests {
     #[case("bar.gz", Input::Gzip)]
     #[case("baz.xml.gz", Input::Gzip)]
     fn test_new(#[case] p: &str, #[case] res: Input) {
-        let p = PathBuf::from(p);
-        let e = Entry::new(&p);
+        let e = Entry::new(p);
         assert_eq!(res, e.ft);
     }
 
@@ -148,21 +134,20 @@ mod tests {
     #[case("bar.gz", Input::Gzip)]
     #[case("baz.xml.gz", Input::Gzip)]
     fn test_from(#[case] p: &str, #[case] res: Input) {
-        let e = Entry::from(p);
-        let f = Entry::new(&PathBuf::from(p));
+        let f = Entry::new(&p);
         assert_eq!(res, e.ft);
         assert_eq!(f, e);
     }
 
     #[test]
     fn test_set() {
-        let e = Entry::from("foo").set(Input::Gzip);
+        let e = Entry::new("foo").set(Input::Gzip);
         assert_eq!(Input::Gzip, e.ft);
     }
 
     #[test]
     fn test_entry_get_data() {
-        let f = Entry::from("Cargo.toml");
+        let f = Entry::new("Cargo.toml");
 
         let txt = f.get_data();
         assert!(txt.is_ok());

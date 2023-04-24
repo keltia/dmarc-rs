@@ -6,7 +6,7 @@ use std::path::PathBuf;
 
 // External crates
 //
-use clap::{crate_authors, crate_description, crate_version, AppSettings, Parser};
+use clap::{crate_authors, crate_description, crate_version, Parser};
 
 // Internal crates
 //
@@ -25,8 +25,10 @@ pub struct Opts {
     #[clap(short = 'N', long = "no-resolve")]
     pub noresolve: bool,
     /// Verbose mode
-    #[clap(short = 'v', long)]
-    pub verbose: bool,
+    #[clap(short = 'v', long, action = clap::ArgAction::Count)]
+    pub verbose: u8,
+    #[clap(short = 'q', long)]
+    pub quiet: bool,
     /// Display version and exit
     #[clap(short = 'V', long = "version")]
     pub version: bool,
@@ -34,5 +36,5 @@ pub struct Opts {
     #[clap(short = 't', long = "input-type")]
     pub itype: Option<String>,
     /// Filenames (possibly none or -)
-    pub files: Vec<PathBuf>,
+    pub files: Vec<String>,
 }

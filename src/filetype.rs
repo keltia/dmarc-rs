@@ -19,7 +19,7 @@
 // Std Library
 //
 use std::ffi::OsStr;
-use std::path::Path;
+use std::path::PathBuf;
 
 // External crates
 //
@@ -39,6 +39,14 @@ pub enum Input {
     Xml,
     /// ZIP files with generally both CSV and XML
     Zip,
+    /// Error type
+    Unknown,
+}
+
+impl Default for Input {
+    fn default() -> Self {
+        Input::Unknown
+    }
 }
 
 /// Validate the input type.
@@ -74,13 +82,16 @@ pub fn valid_input(itype: &str) -> Result<Input> {
 /// Matches a filename to a given input type based on the extension.
 /// Assumes stdin/- is plain text unless specified elsewere
 ///
-pub fn ext_to_ftype(p: &Path) -> Input {
+pub fn ext_to_ftype(p: &str) -> Input {
+    let p = PathBuf::from(p);
     let ext = match p.extension() {
         Some(ext) => ext,
         _ => OsStr::new("txt"),
     }
-    .to_owned();
-    match ext.into_string().unwrap().to_lowercase().as_str() {
+    .to_string_lossy()
+    .to_ascii_lowercase();
+
+    match ext.as_str() {
         "csv" => Input::Csv,
         "zip" => Input::Zip,
         "txt" => Input::Plain,
