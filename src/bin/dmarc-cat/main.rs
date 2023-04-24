@@ -59,21 +59,6 @@ pub mod version;
 // Std library
 //
 
-// Our crates
-//
-use cli::Opts;
-use dmarc_rs::filetype::*;
-use dmarc_rs::res::{res_init, ResType};
-use file::{check_for_files, scan_list};
-use version::version;
-
-// External crates
-//
-use crate::file::handle_one_file;
-use anyhow::{anyhow, Result};
-use clap::Parser;
-use dmarc_rs::types::Feedback;
-
 /// Main entry point
 ///
 fn main() -> Result<()> {
@@ -84,6 +69,28 @@ fn main() -> Result<()> {
         println!("{}", version());
         return Ok(());
     }
+
+    // Check verbosity
+    //
+    let mut lvl = match opts.verbose {
+        0 => Info,
+        1 => Error,
+        2 => Debug,
+        3 => Trace,
+        _ => Trace,
+    };
+
+    if opts.debug {
+        lvl = Debug;
+    }
+
+    // Prepare logging.
+    //
+    stderrlog::new()
+        .modules(["dmarc-cat", "dmarc-rs"])
+        .verbosity(lvl)
+        .quiet(opts.quiet)
+        .init()?;
 
     let mut flist = opts.files.to_owned();
     let mut ftype = Input::Plain;
