@@ -69,8 +69,10 @@ use version::version;
 
 // External crates
 //
+use crate::file::handle_one_file;
 use anyhow::{anyhow, Result};
 use clap::Parser;
+use dmarc_rs::types::Feedback;
 
 /// Main entry point
 ///
@@ -88,15 +90,17 @@ fn main() -> Result<()> {
 
     // Handle --no-resolv flag
     //
-    let mut res = res_init(ResType::Real);
-    if opts.noresolve {
-        res = res_init(ResType::Null);
-    }
+    let _res = if opts.noresolve {
+        res_init(ResType::Null)
+    } else {
+        res_init(ResType::Real)
+    };
 
     // If no arguments, we assume stdin and we enforce the presence of `-t`.
     //
     if flist.is_empty() {
         // Assume stdin
+        //
         ftype = match opts.itype {
             Some(it) => match valid_input(&it) {
                 Ok(it) => it,
@@ -109,21 +113,30 @@ fn main() -> Result<()> {
 
     println!("{:?}", flist);
 
-    // Check each file in the list and returns only the valid ones
-    //
-    let flist = check_for_files(&flist);
-    if flist.is_empty() {
-        return Err(anyhow!("No valid files"));
-    }
+    use rayon::prelude::*;
+
+    let mut failed = vec![];
 
     // Do the thing.
     //
-    let output = match scan_list(&flist) {
-        Ok(res) => res,
-        Err(e) => {
-            format!("Error: {:?}", e)
+    // results will have a vector of Result
+    //
+    let results: Vec<Result<Feedback>> = flist
+        .par_iter()
+        .map(|fname| handle_one_file(&fname))
+        .collect();
+
+    for r in results.iter() {
+        match r {
+            Ok(r) => r,
+            Err(e) => {}
         }
-    };
+
+        if failed.is_empty() {
+            return Ok(rr.join("/"));
+        }
+        Err(anyhow!("{:?}", failed))
+    }
     println!("{:?}", output);
     Ok(())
 }
