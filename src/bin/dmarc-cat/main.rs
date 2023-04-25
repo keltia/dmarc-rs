@@ -51,7 +51,7 @@
 
 use anyhow::{anyhow, bail, Result};
 use clap::Parser;
-use log::{error, trace};
+use log::{debug, error, info, trace, warn};
 use std::path::PathBuf;
 use stderrlog::LogLevelNum::{Debug, Error, Info, Trace};
 
@@ -76,8 +76,15 @@ pub mod cli;
 pub mod file;
 pub mod version;
 
+use std::fs::File;
 // Std library
 //
+use std::io::{stdin, BufReader};
+
+
+// External crates
+//
+use dmarc_rs::task::Task;
 
 /// Main entry point
 ///
@@ -85,6 +92,7 @@ fn main() -> Result<()> {
     let opts: Opts = Opts::parse();
 
     // By-pass everything
+    //
     if opts.version {
         println!("{}", version());
         return Ok(());
@@ -120,14 +128,16 @@ fn main() -> Result<()> {
     // Handle --no-resolv flag
     //
     let res = if opts.noresolve {
+        info!("noresolv");
         res_init(ResType::Null)
     } else {
+        info!("regular resolver");
         res_init(ResType::Real)
     };
 
     // If no arguments, we assume stdin and we enforce the presence of `-t`.
     //
-    let worklist: Vec<Entry> = if flist.is_empty() {
+    let mut current = if flist.is_empty() {
         // Assume stdin
         //
         let ft = match opts.itype {
@@ -137,44 +147,45 @@ fn main() -> Result<()> {
             },
             None => return bail!("-t MUST be provided"),
         };
+        info!("only stdin with format {:?}", ftype);
         vec![Entry { p: "-".into(), ft }]
+        Task::from_reader(stdin(), ftype)
     } else {
-        flist
+        let flist = flist
             .iter()
             // weed out unknown files
             .filter(|p| PathBuf::from(p).exists())
+            .map(|p| &PathBuf::from(p))
             // Create en entry with file type
-            .map(|p| Entry::new(p))
-            .collect::<Vec<_>>()
-    };
+            .collect::<Vec<_>>();
+        // Return a single "file" representing stdin
+        //
 
-    trace!("worklist={:?}", worklist);
 
-    let mut failed: Vec<&str> = vec![];
+        // Otherwise inspect the list and weed out bad files
+        //
+        info!("Will process: {:?}", opts.files);
 
-    // Do the thing.
-    //
-    // results will have a vector of Result
-    //
-    let results: Vec<Result<Feedback>> = worklist
-        .iter()
-        .map(|fname| handle_one_file(&fname))
-        .collect();
+        let (list, failed): (Vec<_>, Vec<_>) = opts
+            .files
+            .iter()
+            .inspect(|f| debug!("looking at {:?}", f))
+            .partition(|&fname| fname.exists());
 
-    for r in results.iter() {
-        let r = match r {
-            Ok(r) => r,
-            Err(e) => {
-                error!("Error: {e}")
-            }
-        };
-
-        if failed.is_empty() {
-            return Ok(rr.join("/"));
+        // Do the thing.
+        //
+            if list.is_empty() {
+            return Err(anyhow!("Empty file list"));
         }
 
-        Err(anyhow!("{:?}", failed))
-    }
+        dbg!(&list);
+        Task::from_list(list)
+    };
+    trace!("task={:?}", current);
+
+    info!("{:?} files to be processed", &current.list());
+    let output = current.run()?;
+    output.iter().map(|r| {});
     println!("{:?}", output);
     Ok(())
 }

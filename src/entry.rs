@@ -19,9 +19,9 @@ use anyhow::{anyhow, Result};
 ///
 #[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
 pub struct Entry {
-    /// Pathname
+    /// Pathname if any, `<stdin>` otherwise
     pub p: PathBuf,
-    /// File type as found by `ext_to_ftype()`
+    /// File type as found by `Input::from_path(&str)` or through `-t`
     pub ft: Input,
 }
 
@@ -51,8 +51,8 @@ impl Entry {
     pub fn new(p: &str) -> Self {
         let path = PathBuf::from(p);
         Entry {
-            p: path,
-            ft: ext_to_ftype(p),
+            p: path.clone(),
+            ft: Input::from_path(path),
         }
     }
 
@@ -74,6 +74,20 @@ impl Entry {
         self
     }
 
+    /// Return the stored path
+    ///
+    #[inline]
+    pub fn path(&self) -> PathBuf {
+        self.p.to_owned()
+    }
+
+    /// Return the Input type of the concerned entry
+    ///
+    #[inline]
+    pub fn input_type(self) -> Input {
+        self.ft
+    }
+
     /// Open the given file and return the content as a String.
     ///
     /// This is where we call the different functions for the different types of
@@ -93,21 +107,26 @@ impl Entry {
     /// };
     /// ```
     ///
-    pub fn get_data(self) -> Result<String> {
-        match self.ft {
-            Input::Csv | Input::Xml | Input::Plain => {
-                let fh = match File::open(&self.p) {
-                    Ok(fh) => fh,
-                    Err(e) => return Err(anyhow!("{}", e.to_string())),
-                };
-                let mut s = String::new();
-                BufReader::new(fh).read_to_string(&mut s)?;
-                Ok(s)
-            }
-            Input::Zip => unimplemented!(),
-            Input::Gzip => unimplemented!(),
-            Input::Unknown => Ok("INVALID".to_string()),
-        }
+    pub fn fetch(&self) -> Result<String> {
+        let mut bf = match File::open(&self.p) {
+            Ok(fh) => BufReader::new(fh),
+            Err(e) => return Err(anyhow!("{}", e.to_string())),
+        };
+        let mut res = String::new();
+        let c = bf.read_to_string(&mut res)?;
+        trace!("read {} bytes", c);
+
+        // We have the raw, possibly compressed in `res`
+        //
+        // Now see the file content
+        //
+        let s = match self.ft {
+            Input::Csv | Input::Xml => res,
+            Input::Zip => "unimplemented".to_string(),
+            Input::Gzip => "unimplemented".to_string(),
+            Input::None => return Err(anyhow!("invalid file content")),
+        };
+        Ok(s)
     }
 }
 
