@@ -155,12 +155,9 @@ fn main() -> Result<()> {
             .iter()
             // weed out unknown files
             .filter(|p| PathBuf::from(p).exists())
-            .map(|p| &PathBuf::from(p))
+            .map(|p| p)
             // Create en entry with file type
             .collect::<Vec<_>>();
-        // Return a single "file" representing stdin
-        //
-
 
         // Otherwise inspect the list and weed out bad files
         //

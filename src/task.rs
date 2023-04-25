@@ -11,7 +11,7 @@ use crate::filetype::Input;
 
 pub enum Task {
     Stream { fh: Box<dyn BufRead>, ft: Input },
-    Files { list: Vec<PathBuf> },
+    Files { list: Vec<String> },
 }
 
 impl Task {
@@ -19,20 +19,18 @@ impl Task {
     ///
     /// Example:
     /// ```
-    /// # use dmarc_rs::filetype::Input;
-    /// # use dmarc_rs::task::Task;
-    /// # let ft = Input::Xml;
     /// # use std::path::PathBuf;
+    /// use dmarc_rs::Task;
     ///
     /// // Possibly from CLI
-    /// let fl = vec![&PathBuf::from("foo.xml"), &PathBuf::from("bar.zip"), &PathBuf::from("baz.gz")];
+    /// let fl = vec!["foo.xml", "bar.zip", "baz.gz"];
     ///
     /// let t = Task::from_list(fl);
     /// ```
     ///
-    pub fn from_list(l: Vec<&PathBuf>) -> Self {
+    pub fn from_list(l: Vec<&String>) -> Self {
         Task::Files {
-            list: l.into_iter().map(|p| p.clone()).collect(),
+            list: l.into_iter().map(|p| p.to_owned()).collect(),
         }
     }
 
@@ -42,13 +40,11 @@ impl Task {
     /// ```
     /// # fn main() -> Result<(), std::io::Error> {
     /// # use std::io::BufReader;
-    /// # use dmarc_rs::filetype::Input;
-    /// # use dmarc_rs::task::Task;
-    /// # let ft = Input::Xml;
+    /// use dmarc_rs::{Input, Task};
     ///
     /// let fh = BufReader::new(std::io::stdin())?;
     ///
-    /// let t = Task::from_reader(fh, ft);
+    /// let t = Task::from_reader(fh, Input::Xml);
     /// # }
     /// ```
     ///
@@ -79,7 +75,9 @@ impl Task {
                     .iter()
                     .inspect(|f| info!("Processing {:?}", *f))
                     .map(|p| {
+                        let p = PathBuf::from(p);
                         let mut res = String::new();
+
                         let n = File::open(p).ok()?.read_to_string(&mut res).ok()?;
                         debug!("Read {} bytes from {:?}", n, p);
 
