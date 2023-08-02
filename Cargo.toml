@@ -3,7 +3,7 @@ name = "dmarc-rs"
 version = "0.6.0"
 edition = "2021"
 authors = ["Ollivier Robert <roberto@keltia.net>"]
-keywords = ["dmarc", "reporting", "e-mail", "cli", "cli-utility", "spf", "dkim", "email"]
+keywords = ["dmarc", "cli-utility", "spf", "dkim", "email"]
 repository = "https://github.com/keltia/dmarc-rs"
 license = "MIT"
 readme = "README.md"
@@ -27,7 +27,7 @@ harness = false
 [dependencies]
 anyhow = "1.0"
 clap = { version = "4", features = ["derive", "cargo"] }
-dns-lookup = "1.0"
+dns-lookup = "2.0"
 flate2 = "1.0"
 log = "0.4"
 num_cpus = "1"
@@ -35,11 +35,12 @@ rayon = "1"
 serde = { version = "1.0", features = ["derive"] }
 serde-xml-rs = "0"
 stderrlog = "0.5"
+strum = { version = "0.25.0", features = ["derive", "strum_macros"] }
 zip = "0.6"
 
 [dev-dependencies]
 assert_cmd = "2.0"
 criterion = "0"
 fake = "2"
-rstest = "0.17"
+rstest = "0.18"
 threadpool = "1"
