@@ -43,7 +43,7 @@
 //!
 //! Examples:
 //! ```rust
-//! # use dmarc_rs::res::{res_init, resolve, ResType};
+//! # use dmarc_rs::{res_init, resolve, ResType};
 //! let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 //! let res = res_init(ResType::Real);
 //!
@@ -53,7 +53,7 @@
 //! ```
 //! and with the parallel solver but with the default resolver:
 //! ```rust
-//! # use dmarc_rs::res::{resolve, res_init, ResType};
+//! # use dmarc_rs::{resolve, res_init, ResType};
 //!
 //! let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 //! let res = res_init(ResType::default());
@@ -70,7 +70,7 @@ const WAIT_TIME: f32 = 0.001f32;
 
 // External crates
 //
-use anyhow::{anyhow, Result};
+use eyre::{anyhow, Result};
 
 pub mod ip;
 
@@ -80,7 +80,7 @@ use std::sync::Arc;
 
 // Our crates
 //
-use crate::res::ip::Ip;
+pub use ip::*;
 
 #[cfg(not(test))]
 use dns_lookup::lookup_addr;
@@ -93,7 +93,7 @@ use std::time::Duration;
 // When testing, hide the external function to put our own.
 // It has to be here and not inside `mod tests` in order to properly shadow the real one.
 #[cfg(test)]
-fn lookup_addr(_ip: &IpAddr) -> anyhow::Result<String> {
+fn lookup_addr(_ip: &IpAddr) -> eyre::Result<String> {
     Ok("foo.bar.invalid".to_string())
 }
 
@@ -251,8 +251,8 @@ impl Resolver for RealResolver {
 
 /// Example:
 /// ```no_run
-/// # use dmarc_rs::res::ip::Ip;
-/// use dmarc_rs::res::{resolve, res_init, ResType};
+/// # use dmarc_rs::ip::Ip;
+/// use dmarc_rs::{resolve, res_init, ResType};
 ///
 /// let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
@@ -269,8 +269,8 @@ impl Resolver for RealResolver {
 ///
 /// Example:
 /// ```rust
-/// # use dmarc_rs::res::{res_init, ResType};
-/// # use dmarc_rs::res::ip::Ip;
+/// # use dmarc_rs::{res_init, ResType};
+/// # use dmarc_rs::Ip;
 /// let res = res_init(ResType::Real);
 ///
 /// let ip = Ip::new("1.1.1.1");
@@ -291,6 +291,7 @@ pub fn res_init(t: ResType) -> Solver {
     }
 }
 
+use crate::ip::Ip;
 /// `resolve()` is the main function call to get all names from the list of `Ip` we get from the
 /// XML file.
 ///
@@ -298,7 +299,7 @@ pub fn res_init(t: ResType) -> Solver {
 ///
 /// Example:
 /// ```no_run
-/// # use dmarc_rs::res::{res_init, resolve, ResType};
+/// # use dmarc_rs::{res_init, resolve, ResType};
 ///
 /// let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
 ///
