@@ -7,8 +7,8 @@ mod res;
 mod task;
 mod types;
 
-pub use entry::Entry;
-pub use filetype::{ext_to_ftype, Input};
+pub use entry::*;
+pub use filetype::*;
 pub use res::*;
 pub use task::*;
 pub use types::*;
