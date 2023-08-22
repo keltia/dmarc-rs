@@ -76,7 +76,7 @@ use std::time::Duration;
 use dns_lookup::lookup_addr;
 // External crates
 //
-use eyre::Result;
+use eyre::{eyre, Result};
 /// `resolve()` is the main function call to get all names from the list of `Ip` we get from the
 /// XML file.
 ///
