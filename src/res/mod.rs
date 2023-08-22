@@ -64,31 +64,51 @@
 //! ```
 //!
 
-/// Constant defining how much we want to sleep for ResType::Sleep.
-///
-const WAIT_TIME: f32 = 0.001f32;
-
-// External crates
-//
-use eyre::{anyhow, Result};
-
-pub mod ip;
-
+#[cfg(test)]
+use std::net::IpAddr;
 // Std Library
 //
 use std::sync::Arc;
+use std::thread::sleep;
+use std::time::Duration;
+
+#[cfg(not(test))]
+use dns_lookup::lookup_addr;
+// External crates
+//
+use eyre::Result;
+/// `resolve()` is the main function call to get all names from the list of `Ip` we get from the
+/// XML file.
+///
+/// It uses rayon's `par_iter()` to parallelize the solving.
+///
+/// Example:
+/// ```no_run
+/// # use dmarc_rs::{res_init, resolve, ResType};
+///
+/// let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
+///
+/// // Select a resolver
+/// let res = res_init(ResType::Real);
+///
+/// // Use the parallel solver with as many threads as the CPU has, rayon makes it
+/// // adaptative so even 1 Ip will be dealt with accordingly.
+/// let ptr = resolve(&l, &res).unwrap();
+/// ```
+///
+use rayon::prelude::*;
 
 // Our crates
 //
 pub use ip::*;
 
-#[cfg(not(test))]
-use dns_lookup::lookup_addr;
+use crate::ip::Ip;
 
-#[cfg(test)]
-use std::net::IpAddr;
-use std::thread::sleep;
-use std::time::Duration;
+/// Constant defining how much we want to sleep for ResType::Sleep.
+///
+const WAIT_TIME: f32 = 0.001f32;
+
+pub mod ip;
 
 // When testing, hide the external function to put our own.
 // It has to be here and not inside `mod tests` in order to properly shadow the real one.
@@ -269,8 +289,7 @@ impl Resolver for RealResolver {
 ///
 /// Example:
 /// ```rust
-/// # use dmarc_rs::{res_init, ResType};
-/// # use dmarc_rs::Ip;
+/// # use dmarc_rs::{ip::Ip, res_init, ResType};
 /// let res = res_init(ResType::Real);
 ///
 /// let ip = Ip::new("1.1.1.1");
@@ -291,33 +310,11 @@ pub fn res_init(t: ResType) -> Solver {
     }
 }
 
-use crate::ip::Ip;
-/// `resolve()` is the main function call to get all names from the list of `Ip` we get from the
-/// XML file.
-///
-/// It uses rayon's `par_iter()` to parallelize the solving.
-///
-/// Example:
-/// ```no_run
-/// # use dmarc_rs::{res_init, resolve, ResType};
-///
-/// let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-///
-/// // Select a resolver
-/// let res = res_init(ResType::Real);
-///
-/// // Use the parallel solver with as many threads as the CPU has, rayon makes it
-/// // adaptative so even 1 Ip will be dealt with accordingly.
-/// let ptr = resolve(&l, &res).unwrap();
-/// ```
-///
-use rayon::prelude::*;
-
 pub fn resolve(ipl: &Vec<&str>, res: &Solver) -> Result<Vec<Ip>> {
     // Return an error on empty list
     // XXX maybe return the empty list?
     if ipl.is_empty() {
-        return Err(anyhow!("Empty list"));
+        return Err(eyre!("Empty list"));
     }
 
     // Bypass the more complex code is Vec has only one element
@@ -337,10 +334,11 @@ pub fn resolve(ipl: &Vec<&str>, res: &Solver) -> Result<Vec<Ip>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::any::{Any, TypeId};
 
     use rstest::rstest;
+
+    use super::*;
 
     #[rstest]
     #[case(ResType::Fake)]

@@ -8,13 +8,14 @@
 //! ```
 //! //use dmarc_rs::Ip;
 //!
-//! use dmarc_rs::Ip;
+//!
+//! use dmarc_rs::ip::Ip;
 //!
 //! let me = Ip::new("127.0.0.1");
 //! ```
 //! or
 //! ```
-//! use dmarc_rs::Ip;
+//! use dmarc_rs::ip::Ip;
 //!
 //! let me = Ip::from(("::1", "localhost"));
 //! ```
@@ -28,7 +29,6 @@ use std::net::IpAddr;
 //
 #[cfg(not(test))]
 use dns_lookup::lookup_addr;
-
 #[cfg(test)]
 use eyre::Result;
 
@@ -53,7 +53,8 @@ impl Ip {
     ///
     /// Example:
     /// ```rust
-    /// # use dmarc_rs::Ip;
+    /// # use dmarc_rs::ip::Ip;
+    ///
     /// let ip = Ip::new("1.1.1.1");
     /// ```
     ///
@@ -68,7 +69,8 @@ impl Ip {
     ///
     /// Examples:
     /// ```rust,no_run
-    /// # use dmarc_rs::Ip;
+    /// # use dmarc_rs::ip::Ip;
+    ///
     /// let ptr = Ip::new("1.1.1.1").solve();
     /// assert_eq!("one.one.one.one", ptr.name)
     /// # ;
@@ -78,12 +80,14 @@ impl Ip {
     ///
     /// Example:
     /// ```rust,no_run
-    /// # use dmarc_rs::Ip;
+    /// # use dmarc_rs::ip::Ip;
+    ///
     /// let ptr = Ip::new("192.0.2.1").solve();
     /// assert_eq!("some.host.invalid", ptr.name)
     /// # ;
     /// ```
     ///
+    #[tracing::instrument]
     pub fn solve(&self) -> Self {
         let ip = self.ip;
         let name = match lookup_addr(&ip) {
@@ -105,7 +109,8 @@ impl Ip {
 ///
 /// Example:
 /// ```
-/// # use dmarc_rs::Ip;
+/// # use dmarc_rs::ip::Ip;
+///
 /// let t = Ip::from(("1.1.1.1", "one.one.one.one"));
 /// ```
 ///
@@ -120,9 +125,9 @@ impl From<(&str, &str)> for Ip {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     use rstest::rstest;
+
+    use super::*;
 
     #[rstest]
     #[case("0.0.0.0")]
