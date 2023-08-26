@@ -1,4 +1,4 @@
-//! All the different deserialization types and structs.
+//! All the different DMARC deserialization types and structs.
 //!
 //! This is a direct translation of appendix C of [RFC-7489]
 //!
@@ -241,12 +241,12 @@ pub type Feedback = Vec<Report>;
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     use std::fs::File;
     use std::io::prelude::*;
 
     use serde_xml_rs::from_str;
+
+    use super::*;
 
     #[test]
     fn test_feedback_deserialize() {
