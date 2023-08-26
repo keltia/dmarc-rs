@@ -30,5 +30,5 @@ fn test_invalid_type_nok() {
 #[test]
 fn test_invalid_type_ok() {
     let mut cmd = Command::cargo_bin(BIN).unwrap();
-    cmd.arg("-t").arg("txt").assert().success();
+    cmd.arg("-t").arg("csv").assert().failure();
 }
