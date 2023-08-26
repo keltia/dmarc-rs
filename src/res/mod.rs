@@ -49,7 +49,8 @@
 //!
 //! // Use the simple solver
 //! let ptr = resolve(&l, &res);
-//! dbg!(&ptr);
+//!
+//! println!("{}", &ptr);
 //! ```
 //! and with the parallel solver but with the default resolver:
 //! ```rust
@@ -60,7 +61,8 @@
 //!
 //! // Use the parallel solver
 //! let ptr = resolve(&l, &res);
-//! dbg!(&ptr);
+//!
+//! println!("{}", ptr);
 //! ```
 //!
 
