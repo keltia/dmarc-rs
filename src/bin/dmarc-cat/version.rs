@@ -1,13 +1,8 @@
 //! versioning stuff
 
-use clap::{crate_authors, crate_description, crate_version};
+use clap::crate_description;
 
-/// Binary name, using a different binary name
-pub(crate) const NAME: &str = env!("CARGO_BIN_NAME");
-/// Binary version
-pub(crate) const VERSION: &str = crate_version!();
-/// Authors
-pub(crate) const AUTHORS: &str = crate_authors!();
+use crate::cli::{AUTHORS, NAME, VERSION};
 
 /// Display our version banner
 ///
@@ -20,14 +15,14 @@ pub(crate) const AUTHORS: &str = crate_authors!();
 ///
 #[inline]
 pub fn version() -> String {
-    return format!(
+    format!(
         "{}/{}/j{} by {}\n{}",
         NAME,
         VERSION,
         num_cpus::get_physical(),
         AUTHORS,
         crate_description!()
-    );
+    )
 }
 
 #[cfg(test)]

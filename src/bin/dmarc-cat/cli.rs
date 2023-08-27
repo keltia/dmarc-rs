@@ -2,21 +2,26 @@
 
 // Std library
 //
-use std::path::PathBuf;
 
 // External crates
 //
 use clap::{crate_authors, crate_description, crate_version, Parser};
 
-// Internal crates
-//
-use crate::version::NAME;
+use dmarc_rs::Input;
+
+/// Binary name, using a different binary name
+pub(crate) const NAME: &str = env!("CARGO_BIN_NAME");
+/// Binary version
+pub(crate) const VERSION: &str = crate_version!();
+/// Authors
+pub(crate) const AUTHORS: &str = crate_authors!();
+/// Description
+pub(crate) const DESCR: &str = crate_description!();
 
 /// All parsable options and arguments.
 #[derive(Parser, Debug)]
 #[command(disable_version_flag = true)]
-#[clap(name = NAME, about = crate_description!())]
-#[clap(version = crate_version!(), author = crate_authors!())]
+#[clap(version = VERSION, author = AUTHORS, name = NAME, about = DESCR)]
 pub struct Opts {
     /// debug mode
     #[clap(short = 'D', long = "debug")]
@@ -33,8 +38,8 @@ pub struct Opts {
     #[clap(short = 'V', long = "version")]
     pub version: bool,
     /// Specify the type of input data
-    #[clap(short = 't', long = "input-type")]
-    pub itype: Option<String>,
+    #[clap(short = 't', long = "input-type", value_parser)]
+    pub itype: Option<Input>,
     /// Filenames (possibly none or -)
-    pub files: Vec<String>,
+    pub files: Option<Vec<String>>,
 }
