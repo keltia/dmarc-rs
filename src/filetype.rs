@@ -140,5 +140,6 @@ mod tests {
     fn test_valid_input(#[case] s: &str, #[case] it: Input) {
         let r = Input::from(s);
         assert!(r.valid());
+        assert_eq!(it, r);
     }
 }
