@@ -3,7 +3,7 @@
 //! Please run with `cargo bench`.
 //!
 
-use dmarc_rs::res::{res_init, ResType, Solver};
+use dmarc_rs::{res_init, ResType, Solver};
 
 // Std library
 //
@@ -13,8 +13,8 @@ use std::thread;
 
 // External crates
 //
-use anyhow::Result;
 use criterion::{criterion_group, criterion_main, Criterion};
+use eyre::Result;
 use rayon::prelude::*;
 use threadpool::ThreadPool;
 
@@ -129,7 +129,7 @@ fn fan_in(rx_out: Receiver<Ip>) -> Result<Receiver<Ip>, Box<dyn std::error::Erro
     Ok(rx)
 }
 
-use dmarc_rs::res::ip::Ip;
+use dmarc_rs::ip::Ip;
 use fake::{Fake, Faker};
 
 /// Generate a dataset of N Sleep IpAddr
