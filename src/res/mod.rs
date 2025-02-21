@@ -68,17 +68,18 @@
 
 #[cfg(test)]
 use std::net::IpAddr;
-// Std Library
-//
+
 use std::sync::Arc;
 use std::thread::sleep;
 use std::time::Duration;
 
 #[cfg(not(test))]
 use dns_lookup::lookup_addr;
+
 // External crates
 //
-use eyre::{eyre, Result};
+use eyre::Result;
+
 /// `resolve()` is the main function call to get all names from the list of `Ip` we get from the
 /// XML file.
 ///
@@ -102,9 +103,8 @@ use rayon::prelude::*;
 
 // Our crates
 //
+use crate::errors::Status;
 pub use ip::*;
-
-use crate::ip::Ip;
 
 /// Constant defining how much we want to sleep for ResType::Sleep.
 ///
@@ -316,7 +316,7 @@ pub fn resolve(ipl: &Vec<&str>, res: &Solver) -> Result<Vec<Ip>> {
     // Return an error on empty list
     // XXX maybe return the empty list?
     if ipl.is_empty() {
-        return Err(eyre!("Empty list"));
+        return Err(Status::EmptyList.into());
     }
 
     // Bypass the more complex code is Vec has only one element
