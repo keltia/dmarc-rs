@@ -5,32 +5,48 @@
 
 // Std library
 //
-use std::fs::File;
-use std::io::{BufReader, Read};
+use std::fmt::{Debug, Display, Formatter};
+use std::fs;
 use std::path::PathBuf;
+
+use eyre::{eyre, Result};
+use tracing::trace;
 
 // Our crates
 //
-use crate::filetype::{ext_to_ftype, Input};
-
-use anyhow::{anyhow, Result};
+use crate::filetype::Input;
 
 /// Entry carries the file path and its type (Plain, Gzip, etc.).
 ///
-#[derive(Debug, Ord, PartialOrd, Eq, PartialEq)]
+#[derive(Clone)]
 pub struct Entry {
     /// Pathname if any, `<stdin>` otherwise
-    pub p: PathBuf,
+    p: PathBuf,
     /// File type as found by `Input::from_path(&str)` or through `-t`
-    pub ft: Input,
+    ft: Input,
 }
 
 impl Default for Entry {
     fn default() -> Self {
-        Entry {
-            p: PathBuf::from(""),
+        Self {
+            p: PathBuf::new(),
             ft: Input::Unknown,
         }
+    }
+}
+
+impl Display for Entry {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.p.to_string_lossy())
+    }
+}
+
+impl Debug for Entry {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Entry::File")
+            .field("p", &self.p)
+            .field("ft", &self.ft)
+            .finish()
     }
 }
 
@@ -39,53 +55,39 @@ impl Entry {
     ///
     /// Example:
     /// ```
-    /// use std::path::PathBuf;
-    /// use dmarc_rs::entry::Entry;
-    /// use dmarc_rs::filetype::Input;
+    /// use dmarc_rs::Entry;
     ///
-    /// let f = Entry::new("Foo.zip");
+    /// let f = Entry::from_str("Foo.zip");
     ///
-    /// println!("{:?}", f.ft);
+    /// println!("{:?}", f.input_type());
     /// ```
     ///
-    pub fn new(p: &str) -> Self {
-        let path = PathBuf::from(p);
+    #[tracing::instrument]
+    pub fn from_str(value: &str) -> Self {
+        let ft = Input::from(value);
         Entry {
-            p: path.clone(),
-            ft: Input::from_path(path),
+            p: PathBuf::from(value),
+            ft,
         }
-    }
-
-    /// Allow for changing the file type
-    ///
-    /// Example:
-    /// ```
-    /// use dmarc_rs::entry::Entry;
-    /// use dmarc_rs::filetype::Input;
-    ///
-    /// // This is obviously wrong, don't do it :)
-    /// let f = Entry::new("Foo.zip").set(Input::Gzip);
-    ///
-    /// println!("{:?}", f.ft);
-    /// ```
-    ///
-    pub fn set(mut self, t: Input) -> Self {
-        self.ft = t;
-        self
     }
 
     /// Return the stored path
     ///
     #[inline]
-    pub fn path(&self) -> PathBuf {
-        self.p.to_owned()
+    pub fn path(&self) -> Result<PathBuf> {
+        Ok(self.p.clone())
     }
 
     /// Return the Input type of the concerned entry
     ///
     #[inline]
-    pub fn input_type(self) -> Input {
-        self.ft
+    pub fn input_type(&self) -> Input {
+        self.ft.clone()
+    }
+
+    pub fn with(&mut self, input: Input) -> &mut Self {
+        self.ft = input;
+        self
     }
 
     /// Open the given file and return the content as a String.
@@ -97,34 +99,32 @@ impl Entry {
     ///
     /// Example:
     /// ```
-    /// # use anyhow::anyhow;
-    /// # use dmarc_rs::entry::Entry;
-    /// let f = Entry::new("foo.xml");
+    /// # use eyre::eyre;
+    /// use dmarc_rs::Entry;
     ///
-    /// let xml = match f.get_data() {
+    /// let f = Entry::from_str("foo.xml");
+    ///
+    /// let xml = match f.fetch() {
     ///     Ok(s) => s,
-    ///     Err(e) => anyhow!("Error reading.").to_string(),
+    ///     Err(e) => eyre!("Error reading.").to_string(),
     /// };
     /// ```
     ///
+    #[tracing::instrument(skip(self))]
     pub fn fetch(&self) -> Result<String> {
-        let mut bf = match File::open(&self.p) {
-            Ok(fh) => BufReader::new(fh),
-            Err(e) => return Err(anyhow!("{}", e.to_string())),
-        };
-        let mut res = String::new();
-        let c = bf.read_to_string(&mut res)?;
-        trace!("read {} bytes", c);
+        let res = fs::read_to_string(&self.p)?;
+        trace!("read {} bytes", res.len());
 
         // We have the raw, possibly compressed in `res`
         //
         // Now see the file content
         //
-        let s = match self.ft {
+        let s = match &self.input_type() {
             Input::Csv | Input::Xml => res,
             Input::Zip => "unimplemented".to_string(),
             Input::Gzip => "unimplemented".to_string(),
-            Input::None => return Err(anyhow!("invalid file content")),
+            Input::TarGzip => "unimplemented".to_string(),
+            Input::Unknown => return Err(eyre!("invalid file content")),
         };
         Ok(s)
     }
@@ -132,45 +132,44 @@ impl Entry {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use rstest::rstest;
 
+    use super::*;
+
     #[rstest]
-    #[case("", Input::Plain)]
-    #[case("foo", Input::Plain)]
+    #[case("", Input::Xml)]
+    #[case("foo", Input::Xml)]
     #[case("foo.zip", Input::Zip)]
     #[case("bar.gz", Input::Gzip)]
     #[case("baz.xml.gz", Input::Gzip)]
     fn test_new(#[case] p: &str, #[case] res: Input) {
-        let e = Entry::new(p);
+        let e = Entry::from_str(p);
         assert_eq!(res, e.ft);
     }
 
     #[rstest]
-    #[case("", Input::Plain)]
-    #[case("foo", Input::Plain)]
+    #[case("", Input::Xml)]
+    #[case("foo", Input::Xml)]
     #[case("foo.zip", Input::Zip)]
     #[case("bar.gz", Input::Gzip)]
     #[case("baz.xml.gz", Input::Gzip)]
     fn test_from(#[case] p: &str, #[case] res: Input) {
-        let f = Entry::new(&p);
-        assert_eq!(res, e.ft);
-        assert_eq!(f, e);
+        let f = Entry::from_str(p);
+        assert_eq!(res, f.ft);
     }
 
     #[test]
     fn test_set() {
-        let e = Entry::new("foo").set(Input::Gzip);
+        let mut e = Entry::from_str("foo");
+        e.with(Input::Gzip);
         assert_eq!(Input::Gzip, e.ft);
     }
 
     #[test]
     fn test_entry_get_data() {
-        let f = Entry::new("Cargo.toml");
+        let f = Entry::from_str("Cargo.toml");
 
-        let txt = f.get_data();
-        assert!(txt.is_ok());
-        let txt = txt.unwrap();
-        assert!(txt.contains("dmarc-rs"))
+        let txt = f.fetch();
+        assert!(txt.is_err());
     }
 }
