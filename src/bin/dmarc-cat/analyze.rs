@@ -2,20 +2,19 @@
 //!
 //!
 
-use std::fmt::{Display, Formatter};
 // Std library
 //
-use std::fs::File;
+use std::fmt::{Display, Formatter};
+use std::io::BufReader;
 use std::path::PathBuf;
-
-// Our crates
-//
-use dmarc_rs::types::*;
 
 // External crates
 //
-use anyhow::Result;
-use std::io::BufReader;
+use eyre::Result;
+
+// Our crates
+//
+use dmarc_rs::Feedback;
 
 #[derive(Debug)]
 pub struct Dmarc {
@@ -26,8 +25,8 @@ pub struct Dmarc {
 impl Dmarc {
     /// Decode the XML file and generate the report
     ///
-    pub fn from_str(fname: PathBuf, data: &str) -> Result<Dmarc> {
-        let rdr = BufReader::new(data);
+    pub fn from_str(fname: PathBuf, data: &str) -> Result<Self> {
+        let rdr = BufReader::new(data.as_bytes());
         let report: Feedback = serde_xml_rs::from_reader(rdr)?;
         Ok(Dmarc { fname, report })
     }
@@ -36,7 +35,7 @@ impl Dmarc {
 impl Display for Dmarc {
     /// Generate the output through a template
     ///
-    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, _f: &mut Formatter<'_>) -> std::fmt::Result {
         todo!()
     }
 }
