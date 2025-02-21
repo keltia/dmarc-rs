@@ -69,7 +69,6 @@ pub(crate) fn init_runtime(opts: &Opts) -> eyre::Result<Solver> {
         .with_targets(true)
         .with_verbose_entry(true)
         .with_verbose_exit(true)
-        .with_higher_precision(true)
         .with_bracketed_fields(true);
 
     // Load filters from environment
