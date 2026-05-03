@@ -18,7 +18,6 @@
 
 // Std Library
 //
-use std::ffi::OsStr;
 use std::fmt::Debug;
 use std::path::PathBuf;
 
@@ -65,7 +64,7 @@ where
 
         let ext = match p.extension() {
             Some(ext) => ext,
-            _ => OsStr::new("txt"),
+            _ => return Input::Unknown,
         }
         .to_string_lossy()
         .to_ascii_lowercase();
@@ -103,7 +102,7 @@ mod tests {
     use super::*;
 
     #[rstest]
-    #[case("foo", Input::Xml)]
+    #[case("foo", Input::Unknown)]
     #[case("foo.txt", Input::Xml)]
     #[case("foo.zip", Input::Zip)]
     #[case("foo.ZIP", Input::Zip)]
@@ -122,7 +121,6 @@ mod tests {
     }
 
     #[rstest]
-    #[case("foo", Input::Xml)]
     #[case("foo.txt", Input::Xml)]
     #[case("foo.zip", Input::Zip)]
     #[case("foo.ZIP", Input::Zip)]
@@ -133,13 +131,21 @@ mod tests {
     #[case("foo.XML", Input::Xml)]
     #[case("foo.csv", Input::Csv)]
     #[case("foo.CSV", Input::Csv)]
+    fn test_valid_input(#[case] s: &str, #[case] it: Input) {
+        let r = Input::from(s);
+        assert!(r.valid());
+        assert_eq!(it, r);
+    }
+
+    #[rstest]
+    #[case("foo", Input::Unknown)]
     #[case(".CSV", Input::Unknown)]
     #[case("foobar", Input::Unknown)]
     #[case("qZip", Input::Unknown)]
     #[case("", Input::Unknown)]
-    fn test_valid_input(#[case] s: &str, #[case] it: Input) {
+    fn test_valid_input_not(#[case] s: &str, #[case] it: Input) {
         let r = Input::from(s);
-        assert!(r.valid());
+        assert!(!r.valid());
         assert_eq!(it, r);
     }
 }
