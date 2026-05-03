@@ -56,6 +56,7 @@ impl Ip {
     /// # use dmarc_rs::ip::Ip;
     ///
     /// let ip = Ip::new("1.1.1.1");
+    /// dbg!(ip);
     /// ```
     ///
     pub fn new(s: &str) -> Self {

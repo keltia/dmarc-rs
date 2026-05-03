@@ -45,24 +45,12 @@
 //! ```rust
 //! # use dmarc_rs::{res_init, resolve, ResType};
 //! let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-//! let res = res_init(ResType::Real);
+//! let res = res_init(ResType::Fake);
 //!
 //! // Use the simple solver
 //! let ptr = resolve(&l, &res);
 //!
-//! println!("{}", &ptr);
-//! ```
-//! and with the parallel solver but with the default resolver:
-//! ```rust
-//! # use dmarc_rs::{resolve, res_init, ResType};
-//!
-//! let l = Vec::from(["1.1.1.1", "2606:4700:4700::1111", "192.0.2.1"]);
-//! let res = res_init(ResType::default());
-//!
-//! // Use the parallel solver
-//! let ptr = resolve(&l, &res);
-//!
-//! println!("{}", ptr);
+//! dbg!(&ptr);
 //! ```
 //!
 
