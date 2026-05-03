@@ -137,8 +137,8 @@ mod tests {
     use super::*;
 
     #[rstest]
-    #[case("", Input::Xml)]
-    #[case("foo", Input::Xml)]
+    #[case("", Input::Unknown)]
+    #[case("foo", Input::Unknown)]
     #[case("foo.zip", Input::Zip)]
     #[case("bar.gz", Input::Gzip)]
     #[case("baz.xml.gz", Input::Gzip)]
@@ -148,8 +148,8 @@ mod tests {
     }
 
     #[rstest]
-    #[case("", Input::Xml)]
-    #[case("foo", Input::Xml)]
+    #[case("", Input::Unknown)]
+    #[case("foo", Input::Unknown)]
     #[case("foo.zip", Input::Zip)]
     #[case("bar.gz", Input::Gzip)]
     #[case("baz.xml.gz", Input::Gzip)]
